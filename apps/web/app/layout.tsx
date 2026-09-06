@@ -20,7 +20,7 @@ const bootScript = `try{var s=JSON.parse(localStorage.getItem('mull.settings')||
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" data-mull-root data-palette="amber" data-theme="dark" suppressHydrationWarning>
+    <html lang="en" data-mull-root data-palette="amber" data-theme="dark" suppressHydrationWarning className={`${serif.variable} ${sans.variable} ${mono.variable}`}>
       <head>
         <style dangerouslySetInnerHTML={{ __html: THEME_CSS }} />
         <style
@@ -30,7 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
         <script dangerouslySetInnerHTML={{ __html: bootScript }} />
       </head>
-      <body className={`${serif.variable} ${sans.variable} ${mono.variable}`}>
+      <body>
         <Nav />
         {children}
       </body>
