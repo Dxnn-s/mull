@@ -11,3 +11,4 @@ apps/extension/mull-extension-*.zip
 packages/core/eval-results/
 test-results/
 playwright-report/
+dist-test/
