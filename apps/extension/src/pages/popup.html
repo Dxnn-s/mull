@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en" data-mull-root>
+<head>
+<meta charset="utf-8">
+<title>Mull</title>
+<style id="theme"></style>
+<style>
+  body { margin: 0; width: 300px; background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 13px; }
+  .wrap { padding: 16px 16px 12px; }
+  .eyebrow { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); display: flex; align-items: center; justify-content: space-between; }
+  h1 { font-family: var(--serif); font-weight: 400; font-size: 26px; margin: 6px 0 2px; }
+  .sub { color: var(--fg-muted); margin: 0 0 14px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+  .tile { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+  .tile .k { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--fg-muted); }
+  .tile .v { font-family: var(--serif); font-size: 24px; margin-top: 2px; }
+  .tile .v.data { color: var(--data); }
+  .switch { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+  .switch input { accent-color: var(--accent); width: 16px; height: 16px; }
+  .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  button { font-family: var(--sans); font-size: 13px; border-radius: 8px; padding: 7px 12px; cursor: pointer; border: 1px solid var(--border); background: var(--surface-2); color: var(--fg); }
+  .foot { font-family: var(--mono); font-size: 10.5px; color: var(--fg-muted); margin-top: 12px; }
+  .warn { background: var(--accent-soft); border: 1px solid var(--accent-border); border-radius: 8px; padding: 8px 10px; margin-bottom: 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow"><span>mull</span><label class="switch"><input type="checkbox" id="enabled"><span id="enabled-label">on</span></label></div>
+  <h1>Think first.</h1>
+  <p class="sub" id="sub">Today</p>
+  <div id="nokey" class="warn" hidden>No API key yet. Mull fails open until you add one.</div>
+  <div class="grid">
+    <div class="tile"><div class="k">gated today</div><div class="v" id="gated">0</div></div>
+    <div class="tile"><div class="k">passed</div><div class="v" id="passed">0</div></div>
+    <div class="tile"><div class="k">hold rate</div><div class="v data" id="hold">–</div></div>
+    <div class="tile"><div class="k">streak</div><div class="v" id="streak">0</div></div>
+  </div>
+  <div class="row">
+    <span id="sites"></span>
+    <button id="settings">Settings</button>
+  </div>
+  <div class="foot">no telemetry · keys never leave this device</div>
+</div>
+<script src="popup.js" type="module"></script>
+</body>
+</html>

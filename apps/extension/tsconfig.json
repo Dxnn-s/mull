@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["chrome", "node"],
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "paths": { "@mull/core": ["../../packages/core/src/index.ts"] }
+  },
+  "include": ["src", "test", "build.mjs"]
+}

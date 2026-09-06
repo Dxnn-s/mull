@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en" data-mull-root>
+<head>
+<meta charset="utf-8">
+<title>Mull settings</title>
+<style id="theme"></style>
+<style>
+  body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 14px; }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 40px 24px 80px; }
+  .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); }
+  h1 { font-family: var(--serif); font-weight: 400; font-size: 40px; margin: 8px 0 4px; letter-spacing: -0.01em; }
+  .lede { color: var(--fg-muted); margin: 0 0 28px; max-width: 56ch; }
+  section { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; margin-bottom: 16px; }
+  h2 { font-family: var(--serif); font-weight: 400; font-size: 22px; margin: 0 0 12px; }
+  .field { display: grid; grid-template-columns: 180px 1fr; gap: 12px; align-items: center; margin: 10px 0; }
+  .field label { color: var(--fg-muted); font-size: 13px; }
+  .field .hint { grid-column: 2; font-family: var(--mono); font-size: 11px; color: var(--fg-muted); margin-top: -6px; }
+  input[type="text"], input[type="password"], select, textarea { width: 100%; font-family: var(--sans); font-size: 14px; background: var(--bg); color: var(--fg); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; }
+  input[type="number"] { width: 90px; font-family: var(--mono); background: var(--bg); color: var(--fg); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; }
+  textarea { min-height: 64px; font-family: var(--mono); font-size: 12.5px; }
+  input[type="checkbox"], input[type="radio"] { accent-color: var(--accent); }
+  .inline { display: flex; gap: 16px; flex-wrap: wrap; }
+  .inline label { display: flex; gap: 6px; align-items: center; color: var(--fg); }
+  .actions { display: flex; gap: 10px; align-items: center; position: sticky; bottom: 0; padding: 14px 0; background: linear-gradient(transparent, var(--bg) 30%); }
+  button { font-family: var(--sans); font-size: 14px; border-radius: 10px; padding: 9px 16px; cursor: pointer; border: 1px solid var(--border); background: var(--surface-2); color: var(--fg); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #0a0a0e; font-weight: 600; }
+  #status { font-family: var(--mono); font-size: 12px; color: var(--fg-muted); }
+  .privacy { font-family: var(--mono); font-size: 11.5px; color: var(--fg-muted); border-left: 2px solid var(--accent-border); padding: 4px 10px; margin-top: 16px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">mull · settings</div>
+  <h1>Set the gate.</h1>
+  <p class="lede">Mull reads every prompt you send to ChatGPT, Claude, or Gemini, and only calls your own AI provider with your own key. Nothing is stored anywhere but this browser.</p>
+
+  <section>
+    <h2>Provider</h2>
+    <div class="field"><label for="provider">Provider</label><select id="provider"></select></div>
+    <div class="field"><label for="apiKey">API key</label><input type="password" id="apiKey" autocomplete="off"><div class="hint" id="keyHint"></div></div>
+    <div class="field"><label for="model">Model</label><input type="text" id="model" list="models"><datalist id="models"></datalist><div class="hint">Leave blank for the provider default. Cheaper models work fine for the classifier.</div></div>
+    <div class="field"><label></label><div><button id="test">Test key</button> <span id="testResult" class="hint"></span></div></div>
+  </section>
+
+  <section>
+    <h2>Gate</h2>
+    <div class="field"><label>Strictness</label><div class="inline">
+      <label><input type="radio" name="strictness" value="lenient"> lenient</label>
+      <label><input type="radio" name="strictness" value="normal"> normal</label>
+      <label><input type="radio" name="strictness" value="strict"> strict (gates edge cases too)</label>
+    </div></div>
+    <div class="field"><label for="questionsPerGate">Questions per gate</label><select id="questionsPerGate"><option>1</option><option>2</option><option>3</option></select></div>
+    <div class="field"><label for="subjects">Subjects you're studying</label><textarea id="subjects" placeholder="one per line, e.g. calculus"></textarea><div class="hint">Steers the classifier toward gating lookups in these.</div></div>
+    <div class="field"><label for="allowlist">Always allow</label><textarea id="allowlist"></textarea><div class="hint">One per line. Entries ending in ":" are prefixes and get stripped before sending (work: fix my regex). Others match anywhere.</div></div>
+    <div class="field"><label>Sites</label><div class="inline">
+      <label><input type="checkbox" id="site-chatgpt"> ChatGPT</label>
+      <label><input type="checkbox" id="site-claude"> Claude</label>
+      <label><input type="checkbox" id="site-gemini"> Gemini</label>
+    </div></div>
+  </section>
+
+  <section>
+    <h2>Teeth</h2>
+    <div class="field"><label for="hardMode">Hard mode</label><label class="inline"><input type="checkbox" id="hardMode"> no skip button, block after <input type="number" id="failsBeforeBlock" min="1" max="5"> misses for <input type="number" id="blockMinutes" min="1" max="120"> minutes</label></div>
+    <div class="field"><label for="conceptMemoryDays">Concept memory</label><label class="inline">a passed concept stays unlocked for <input type="number" id="conceptMemoryDays" min="0" max="365"> days (0 = off)</label></div>
+  </section>
+
+  <section>
+    <h2>Look</h2>
+    <div class="field"><label>Palette</label><div class="inline">
+      <label><input type="radio" name="palette" value="amber"> Operator Amber</label>
+      <label><input type="radio" name="palette" value="sage"> Atelier Sage</label>
+    </div></div>
+    <div class="field"><label>Theme</label><div class="inline">
+      <label><input type="radio" name="theme" value="dark"> dark</label>
+      <label><input type="radio" name="theme" value="light"> light</label>
+    </div></div>
+  </section>
+
+  <div class="actions"><button class="primary" id="save">Save</button><span id="status"></span></div>
+  <div class="privacy">privacy: no telemetry, no server, no account. your key is stored in chrome.storage.local and sent only to your provider's API.</div>
+</div>
+<script src="options.js" type="module"></script>
+</body>
+</html>
