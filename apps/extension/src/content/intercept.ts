@@ -119,7 +119,10 @@ export function installIntercept(site: SiteAdapter): void {
         if (!handled && btn && !btn.disabled) btn.click();
       }
     } finally {
-      setTimeout(() => (releasing = false), 400);
+      // click() and dispatchEvent() run the site's handlers synchronously, so the
+      // bypass can close immediately. A timer here left a window where the next
+      // real keystroke slipped past the gate.
+      releasing = false;
     }
   }
 }

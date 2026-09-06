@@ -7,6 +7,7 @@ const links = [
   { href: '/', label: 'chat' },
   { href: '/stats', label: 'stats' },
   { href: '/settings', label: 'settings' },
+  { href: '/about', label: 'about' },
 ];
 
 export function Nav() {

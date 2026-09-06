@@ -144,6 +144,82 @@ test.describe('chatgpt fixture', () => {
   });
 });
 
+test.describe('v1 behaviors', () => {
+  test('a passed concept is remembered and not re-gated', async ({ context, sw, baseURL }) => {
+    await sw.evaluate(() => chrome.storage.local.set({ settings: { provider: 'mock', enabled: true, conceptMemoryDays: 7 } }));
+    const page = await open(context, `${baseURL}/chatgpt.html`);
+    await page.locator('#prompt-textarea').click();
+    await page.keyboard.type('what is the chain rule');
+    await page.keyboard.press('Enter');
+    await passQuiz(page);
+    await expect(page.locator('#log li')).toHaveCount(1);
+
+    await page.locator('#prompt-textarea').click();
+    await page.keyboard.type('what is the chain rule');
+    await page.keyboard.press('Enter');
+    await expect(page.locator('#log li')).toHaveCount(2);
+    await expect(overlay(page)).toHaveCount(0);
+    await expect
+      .poll(async () => sw.evaluate(async () => ((await chrome.storage.local.get('stats')).stats as { remembered: number } | undefined)?.remembered ?? 0))
+      .toBe(1);
+  });
+
+  test('hard mode hides skip and blocks after a miss', async ({ context, sw, baseURL }) => {
+    await sw.evaluate(() =>
+      chrome.storage.local.set({ settings: { provider: 'mock', enabled: true, hardMode: { enabled: true, failsBeforeBlock: 1, blockMinutes: 5 } } }),
+    );
+    const page = await open(context, `${baseURL}/chatgpt.html`);
+    await page.locator('#prompt-textarea').click();
+    await page.keyboard.type('what is a p-value');
+    await page.keyboard.press('Enter');
+    await expect(overlay(page).getByRole('button', { name: /read it/i })).toBeVisible();
+    await expect(overlay(page).getByRole('button', { name: /skip/i })).toHaveCount(0);
+    await overlay(page).getByRole('button', { name: /read it/i }).click();
+    await overlay(page).getByLabel('A silly one').check();
+    await overlay(page).getByLabel('Never').check();
+    await overlay(page).getByRole('button', { name: /check answers/i }).click();
+    await expect(overlay(page).getByRole('heading', { name: 'Blocked.' })).toBeVisible();
+    await expect(page.locator('#log li')).toHaveCount(0);
+
+    // The block persists into the next prompt.
+    await overlay(page).getByRole('button', { name: 'Close' }).click();
+    await page.locator('#prompt-textarea').click();
+    await page.keyboard.type('what is entropy');
+    await page.keyboard.press('Enter');
+    await expect(overlay(page).getByRole('heading', { name: 'Blocked.' })).toBeVisible();
+  });
+
+  test('popup shows the pass', async ({ context, sw, baseURL }) => {
+    const page = await open(context, `${baseURL}/chatgpt.html`);
+    await page.locator('#prompt-textarea').click();
+    await page.keyboard.type('define osmosis');
+    await page.keyboard.press('Enter');
+    await passQuiz(page);
+    await expect(page.locator('#log li')).toHaveCount(1);
+
+    const id = new URL(sw.url()).host;
+    const popup = await context.newPage();
+    await popup.goto(`chrome-extension://${id}/popup.html`);
+    await expect(popup.locator('#passed')).toHaveText('1');
+    await expect(popup.locator('#gated')).toHaveText('1');
+    await expect(popup.locator('#streak')).toHaveText('1');
+    await expect(popup.locator('#hold')).toHaveText('100%');
+  });
+});
+
+test.describe('gemini fixture', () => {
+  test('quill composer is gated and released', async ({ context, sw, baseURL }) => {
+    void sw;
+    const page = await open(context, `${baseURL}/gemini.html`);
+    await page.locator('.ql-editor').click();
+    await page.keyboard.type('what is photosynthesis');
+    await page.keyboard.press('Enter');
+    await expect(overlay(page).getByRole('heading', { name: 'photosynthesis' })).toBeVisible();
+    await passQuiz(page);
+    await expect(page.locator('#log li')).toHaveText(['what is photosynthesis']);
+  });
+});
+
 test.describe('claude fixture', () => {
   test('send button click is gated and released by click', async ({ context, sw, baseURL }) => {
     void sw;

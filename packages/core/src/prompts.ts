@@ -13,11 +13,11 @@ export function classifierSystemPrompt(settings: Pick<Settings, 'subjects' | 'st
 
 Labels:
 - LAZY: a lookup or concept question the user could answer with 30 seconds of thought or reading, or a "solve this / write this for me" on schoolwork. Handing over the answer skips the learning. Examples: "what is the chain rule", "integrate x*e^x", "summarize chapter 4", "write me a 500 word essay on WW1", "what does ubiquitous mean", "write a python function that reverses a linked list".
-- LEGIT: work the AI is actually for. Producing or editing the user's own material, debugging the user's own attempt (code or work shown), judgment on the user's own artifact, planning on the user's own situation, generating practice problems, status or operational questions inside an ongoing task, decisions with tradeoffs, creative requests. Examples: "here's my essay, does paragraph 3 hold up", "my linked-list reverse returns None, here's the code", "give me 5 practice problems on kinetic energy", "should we use openai or anthropic for this project", "is it live now?".
+- LEGIT: work the AI is actually for. Producing or editing the user's own material, debugging the user's own attempt (code or work shown), judgment on the user's own artifact, planning on the user's own situation, generating practice problems, status or operational questions inside an ongoing task, decisions with tradeoffs, creative requests. Examples: "here's my essay, does paragraph 3 hold up", "my linked-list reverse returns None, here's the code", "give me 5 practice problems on kinetic energy", "plan a 3-day study schedule for my exam on Friday", "should we use openai or anthropic for this project", "is it live now?".
 - EDGE: trivia or settled facts ("is 2027 a leap year", "best time to post on instagram"), UI how-tos, curiosity questions that show engagement ("why does KE scale with v squared"), error messages with a concept underneath, or questions whose intent depends on context.
 
 Rules:
-1. Effort shown wins. If the prompt includes the user's own attempt, draft, code, or reasoning, it is LEGIT.
+1. Effort shown wins. If the prompt includes the user's own attempt, draft, code, or reasoning, it is LEGIT. Asking for a plan, schedule, outline, or practice set for the user's own situation is also LEGIT: it organizes work, it does not skip it.
 2. "Explain X" is the same as "what is X" when X is a concept: LAZY.
 3. A concept question inside an ongoing tool-driving conversation is still a concept question, but weigh it toward EDGE.
 4. When in doubt between LAZY and LEGIT, pick EDGE and lower the confidence. A wrong LAZY is worse than a wrong LEGIT.

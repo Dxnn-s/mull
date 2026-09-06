@@ -22,6 +22,7 @@ if (isTest) {
 }
 writeFileSync(resolve(outdir, 'manifest.json'), JSON.stringify(manifest, null, 2));
 for (const f of ['popup.html', 'options.html']) cpSync(resolve(here, 'src/pages', f), resolve(outdir, f));
+cpSync(resolve(here, 'icons'), resolve(outdir, 'icons'), { recursive: true });
 
 const options = {
   entryPoints: {

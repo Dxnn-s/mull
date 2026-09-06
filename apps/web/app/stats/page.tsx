@@ -3,6 +3,18 @@
 import { holdRate, listConcepts } from '@mull/core/stats';
 import { useStore } from '@/lib/store';
 
+function lastDays(n: number): Array<{ label: string; start: number; end: number }> {
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() - i);
+    const start = d.getTime();
+    out.push({ label: i === 0 ? 'today' : d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }), start, end: start + 86_400_000 });
+  }
+  return out;
+}
+
 export default function StatsPage() {
   const [store] = useStore();
   if (!store) return null;
@@ -35,6 +47,32 @@ export default function StatsPage() {
           </div>
         ))}
       </div>
+      <h2 style={{ fontSize: 22, margin: '0 0 8px' }}>Last seven days</h2>
+      <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 24, fontSize: 13 }}>
+        <thead>
+          <tr className="mono muted" style={{ fontSize: 10.5, letterSpacing: '0.1em', textTransform: 'uppercase', textAlign: 'left' }}>
+            <th style={{ padding: '6px 8px', fontWeight: 400 }}>day</th>
+            <th style={{ padding: '6px 8px', fontWeight: 400 }}>prompts</th>
+            <th style={{ padding: '6px 8px', fontWeight: 400 }}>gated</th>
+            <th style={{ padding: '6px 8px', fontWeight: 400 }}>passed</th>
+            <th style={{ padding: '6px 8px', fontWeight: 400 }}>skipped</th>
+          </tr>
+        </thead>
+        <tbody>
+          {lastDays(7).map((day) => {
+            const evs = stats.recent.filter((e) => e.ts >= day.start && e.ts < day.end);
+            return (
+              <tr key={day.label} style={{ borderTop: '1px solid var(--border)' }}>
+                <td className="mono" style={{ padding: '6px 8px' }}>{day.label}</td>
+                <td style={{ padding: '6px 8px' }}>{evs.length}</td>
+                <td style={{ padding: '6px 8px' }}>{evs.filter((e) => e.gated).length}</td>
+                <td style={{ padding: '6px 8px', color: 'var(--live)' }}>{evs.filter((e) => e.outcome === 'passed').length}</td>
+                <td style={{ padding: '6px 8px', color: evs.some((e) => e.outcome === 'skipped') ? 'var(--danger)' : undefined }}>{evs.filter((e) => e.outcome === 'skipped').length}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
       <h2 style={{ fontSize: 22, margin: '0 0 8px' }}>Concepts you passed</h2>
       {concepts.length === 0 ? (
         <p className="muted">None yet. They show up here after a quiz pass and stay unlocked for the memory window.</p>
