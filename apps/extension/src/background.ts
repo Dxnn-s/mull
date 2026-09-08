@@ -1,5 +1,5 @@
 import { createProvider } from '@mull/core';
-import { applyEvent, rememberPass } from '@mull/core/stats';
+import { addCorrection, applyEvent, rememberPass } from '@mull/core/stats';
 import { classify } from '@mull/core/classify';
 import type { Request, Response } from './shared/messages.ts';
 import { loadAll, savePartial } from './shared/storage.ts';
@@ -36,6 +36,7 @@ async function handle(msg: Request): Promise<Response> {
       const stored = await loadAll();
       const patch: Partial<typeof stored> = {};
       if (msg.event) patch.stats = applyEvent(stored.stats, msg.event);
+      if (msg.correction) patch.stats = addCorrection(patch.stats ?? stored.stats, msg.correction);
       if (msg.rememberConcept) patch.memory = rememberPass(stored.memory, msg.rememberConcept);
       if (msg.block) patch.block = msg.block;
       if (Object.keys(patch).length) await savePartial(patch);

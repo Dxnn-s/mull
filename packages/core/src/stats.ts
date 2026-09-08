@@ -1,4 +1,4 @@
-import type { ConceptMemory, Stats, StatsEvent } from './types.ts';
+import type { ConceptMemory, Correction, Stats, StatsEvent } from './types.ts';
 
 export const EMPTY_STATS: Stats = {
   total: 0,
@@ -6,12 +6,14 @@ export const EMPTY_STATS: Stats = {
   passed: 0,
   failed: 0,
   skipped: 0,
+  cancelled: 0,
   blocked: 0,
   allowlisted: 0,
   remembered: 0,
   streak: 0,
   bestStreak: 0,
   recent: [],
+  corrections: [],
 };
 
 const RECENT_CAP = 200;
@@ -34,6 +36,10 @@ export function applyEvent(stats: Stats, ev: StatsEvent): Stats {
       next.skipped += 1;
       next.streak = 0;
       break;
+    case 'cancelled':
+      next.cancelled += 1;
+      next.streak = 0;
+      break;
     case 'blocked':
       next.blocked += 1;
       break;
@@ -49,14 +55,31 @@ export function applyEvent(stats: Stats, ev: StatsEvent): Stats {
   return next;
 }
 
-export function normalizeStats(s: Partial<Stats> | null | undefined): Stats {
-  return { ...EMPTY_STATS, ...(s ?? {}), recent: Array.isArray(s?.recent) ? s.recent : [] };
+export function addCorrection(stats: Stats, c: Correction): Stats {
+  return { ...stats, corrections: [...stats.corrections, c].slice(-RECENT_CAP) };
 }
 
-/** ScreenZen-style "how often did the gate hold". */
+export function normalizeStats(s: Partial<Stats> | null | undefined): Stats {
+  return {
+    ...EMPTY_STATS,
+    ...(s ?? {}),
+    recent: Array.isArray(s?.recent) ? s.recent : [],
+    corrections: Array.isArray(s?.corrections) ? s.corrections : [],
+  };
+}
+
+/** ScreenZen-style "how often did the gate hold". Skips and cancels both count as not holding. */
 export function holdRate(stats: Stats): number {
-  const decided = stats.passed + stats.skipped;
+  const decided = stats.passed + stats.skipped + stats.cancelled;
   return decided === 0 ? 0 : stats.passed / decided;
+}
+
+/** Median time a card was on screen before pass, fail, skip, or cancel. 0 when nothing is recorded. */
+export function medianCardMs(stats: Stats): number {
+  const times = stats.recent.map((e) => e.ms).filter((m): m is number => typeof m === 'number' && m > 0).sort((a, b) => a - b);
+  if (!times.length) return 0;
+  const mid = Math.floor(times.length / 2);
+  return times.length % 2 ? times[mid]! : Math.round((times[mid - 1]! + times[mid]!) / 2);
 }
 
 export function conceptKey(concept: string): string {
@@ -81,4 +104,12 @@ export function listConcepts(memory: ConceptMemory): Array<{ concept: string; pa
   return Object.entries(memory)
     .map(([concept, v]) => ({ concept, ...v }))
     .sort((a, b) => b.passedAt - a.passedAt);
+}
+
+/** djb2 over the trimmed, lowercased prompt. Recognizable, not reversible. */
+export function promptHash(prompt: string): string {
+  const s = prompt.trim().toLowerCase();
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) >>> 0;
+  return h.toString(16).padStart(8, '0');
 }

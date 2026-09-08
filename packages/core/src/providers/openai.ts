@@ -1,6 +1,7 @@
 import type { CompletionRequest, Provider } from '../types.ts';
 import { OPENAI_DEFAULT_MODEL } from '../provider-info.ts';
 import { readSse } from '../sse.ts';
+import { fetchWithTimeout } from './fetch-timeout.ts';
 
 export { OPENAI_DEFAULT_MODEL };
 
@@ -37,20 +38,27 @@ export class OpenAIProvider implements Provider {
   }
 
   private async request(req: CompletionRequest, stream: boolean, json: boolean): Promise<Response> {
-    const res = await this.fetchImpl('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', authorization: `Bearer ${this.apiKey}` },
-      body: JSON.stringify({
-        model: this.model || OPENAI_DEFAULT_MODEL,
-        max_tokens: req.maxTokens ?? 800,
-        stream,
-        ...(json ? { response_format: { type: 'json_object' } } : {}),
-        messages: [
-          { role: 'system', content: req.system },
-          { role: 'user', content: req.user },
-        ],
-      }),
-    });
+    const model = this.model || OPENAI_DEFAULT_MODEL;
+    const res = await fetchWithTimeout(
+      this.fetchImpl,
+      'https://api.openai.com/v1/chat/completions',
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', authorization: `Bearer ${this.apiKey}` },
+        body: JSON.stringify({
+          model,
+          // gpt-5 family took the renamed parameter; older models keep max_tokens.
+          ...(/^gpt-5|^o\d/.test(model) ? { max_completion_tokens: req.maxTokens ?? 800 } : { max_tokens: req.maxTokens ?? 800 }),
+          stream,
+          ...(json ? { response_format: { type: 'json_object' } } : {}),
+          messages: [
+            { role: 'system', content: req.system },
+            { role: 'user', content: req.user },
+          ],
+        }),
+      },
+      req.timeoutMs,
+    );
     if (!res.ok) throw new Error(`OpenAI ${res.status}: ${(await res.text()).slice(0, 300)}`);
     return res;
   }

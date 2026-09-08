@@ -100,7 +100,63 @@ test.describe('chatgpt fixture', () => {
     await overlay(page).getByLabel('Never').check();
     await overlay(page).getByRole('button', { name: /check answers/i }).click();
     await expect(overlay(page).getByText(/Not quite/)).toBeVisible();
+    // The answer key names the correct choice and the lure that was picked.
+    await expect(overlay(page).locator('[data-testid="review"]')).toContainText('The correct one');
+    await expect(overlay(page).locator('[data-testid="review"]')).toContainText('A silly one');
+    await expect(overlay(page).locator('[data-testid="review"]')).toContainText('first sentence');
     await expect(page.locator('#log li')).toHaveCount(0);
+  });
+
+  test('"this was real work" releases and records a correction', async ({ context, sw, baseURL }) => {
+    const page = await open(context, `${baseURL}/chatgpt.html`);
+    await page.locator('#prompt-textarea').click();
+    await page.keyboard.type('what is a moment of inertia');
+    await page.keyboard.press('Enter');
+    await overlay(page).getByRole('button', { name: /real work/i }).click();
+    await expect(page.locator('#log li')).toHaveText(['what is a moment of inertia']);
+    await expect
+      .poll(async () => sw.evaluate(async () => ((await chrome.storage.local.get('stats')).stats as { corrections: unknown[] } | undefined)?.corrections?.length ?? 0))
+      .toBe(1);
+    const row = await sw.evaluate(async () => ((await chrome.storage.local.get('stats')).stats as { corrections: Array<Record<string, unknown>> }).corrections[0]);
+    expect(row).toMatchObject({ verdict: 'LAZY', label: 'LEGIT' });
+    // The row carries a hash and the concept name, never the prompt.
+    expect(row).not.toHaveProperty('prompt');
+    expect(Object.keys(row).sort()).toEqual(['concept', 'hash', 'label', 'ts', 'verdict']);
+  });
+
+  test('cancel keeps the prompt in the composer and counts a walk-away', async ({ context, sw, baseURL }) => {
+    const page = await open(context, `${baseURL}/chatgpt.html`);
+    await page.locator('#prompt-textarea').click();
+    await page.keyboard.type('define torque');
+    await page.keyboard.press('Enter');
+    await overlay(page).getByRole('button', { name: 'Cancel' }).click();
+    await expect(overlay(page)).toHaveCount(0);
+    await expect(page.locator('#prompt-textarea')).toHaveText('define torque');
+    await expect(page.locator('#log li')).toHaveCount(0);
+    await expect
+      .poll(async () => sw.evaluate(async () => ((await chrome.storage.local.get('stats')).stats as { cancelled: number } | undefined)?.cancelled ?? 0))
+      .toBe(1);
+  });
+
+  test('a hung provider: send anyway from the pill, or Enter twice', async ({ context, sw, baseURL }) => {
+    await sw.evaluate(() => chrome.storage.local.set({ settings: { provider: 'mock', model: 'slow', enabled: true } }));
+    const page = await open(context, `${baseURL}/chatgpt.html`);
+    await page.locator('#prompt-textarea').click();
+    await page.keyboard.type('what is a limit');
+    await page.keyboard.press('Enter');
+    await expect(overlay(page).locator('[data-testid="pill"]')).toBeVisible();
+    await expect(page.locator('#log li')).toHaveCount(0);
+    // Second Enter within two seconds releases the prompt as typed.
+    await page.keyboard.press('Enter');
+    await page.keyboard.press('Enter');
+    await expect(page.locator('#log li')).toHaveText(['what is a limit']);
+    await expect(overlay(page)).toHaveCount(0);
+
+    await page.locator('#prompt-textarea').click();
+    await page.keyboard.type('what is a derivative');
+    await page.keyboard.press('Enter');
+    await overlay(page).locator('[data-testid="pill"] a').click();
+    await expect(page.locator('#log li')).toHaveCount(2);
   });
 
   test('legit prompt goes straight through', async ({ context, sw, baseURL }) => {

@@ -16,7 +16,7 @@ Every provider ships a "study mode" toggle. Nobody keeps it on. Mull is the vers
 4. Every question right releases the prompt. A miss sends you back to the explanation. In hard mode, misses block you for a while.
 5. A concept you passed stays unlocked for a week, so you are never quizzed twice on the same idea.
 
-Prefix a prompt with `work:` to bypass the gate. Skips are allowed outside hard mode but count against your hold rate.
+Prefix a prompt with `work:` to bypass the gate. Skips are allowed outside hard mode but count against your hold rate, and so does closing the card. A miss shows the answer key (what you picked, the right choice, and why) and reshuffles the choices for the retry. "This was real work" releases the prompt and records a hashed correction row you can export as a labeled example.
 
 ## Install the extension (unpacked)
 
@@ -39,14 +39,16 @@ Open http://localhost:3111. Settings are in the nav. Pick **Demo** as the provid
 
 ## Providers
 
-| Provider | Key | Default model |
-|---|---|---|
-| Anthropic | `sk-ant-...` | `claude-opus-5` |
-| OpenAI | `sk-...` | `gpt-4o-mini` |
-| Google Gemini | `AIza...` | `gemini-2.5-flash` |
-| Demo | none | keyword rules, canned answers |
+| Provider | Key | Default model | Age terms |
+|---|---|---|---|
+| OpenAI | `sk-...` | `gpt-5-nano` | 13+ with parental permission |
+| Google Gemini | `AIza...` | `gemini-2.5-flash-lite` | 18+ |
+| Anthropic | `sk-ant-...` | `claude-haiku-4-5` | 18+ |
+| Demo | none | keyword rules, canned answers | none |
 
-The classifier is a ~60-token JSON reply and the card is a short lesson, so cheaper models are fine. Override the model in settings.
+The classifier is a ~60-token JSON reply and the card is a short lesson, so the cheapest model in each family is the default: about $0.0003 per gated prompt on the OpenAI and Gemini defaults, about $0.004 on Haiku. Override the model in settings. Sonnet 5 and Opus 5 get adaptive thinking at low effort; Haiku gets a plain request (it rejects those parameters).
+
+Under 18? OpenAI is the only provider whose terms allow it. Every provider path has a timeout (15 s classify, 30 s card, 60 s chat), and while Mull is waiting you can press Enter twice or click "send anyway" to send the prompt as typed.
 
 ## Development
 

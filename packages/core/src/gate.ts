@@ -8,11 +8,13 @@ export async function buildGateCard(
   subject: string | null,
   questionsPerGate: number,
   provider: Provider,
+  timeoutMs?: number,
 ): Promise<GateCard> {
   const raw = await provider.complete({
     system: gateSystemPrompt(questionsPerGate),
     user: gateUserPrompt(prompt, concept, subject),
     maxTokens: 900,
+    ...(timeoutMs ? { timeoutMs } : {}),
   });
   return normalizeGateCard(extractJson<Partial<GateCard>>(raw), concept, questionsPerGate);
 }
@@ -31,13 +33,15 @@ export function normalizeGateCard(card: Partial<GateCard>, fallbackConcept: stri
 
 function normalizeQuestion(q: unknown): QuizQuestion | null {
   if (!q || typeof q !== 'object') return null;
-  const { q: text, choices, answer } = q as Partial<QuizQuestion>;
+  const { q: text, choices, answer, why } = q as Partial<QuizQuestion>;
   if (typeof text !== 'string' || !text.trim()) return null;
   if (!Array.isArray(choices) || choices.length < 2) return null;
   const clean = choices.map((c) => String(c).trim()).filter(Boolean);
   const idx = Number(answer);
   if (!Number.isInteger(idx) || idx < 0 || idx >= clean.length) return null;
-  return { q: text.trim(), choices: clean, answer: idx };
+  const out: QuizQuestion = { q: text.trim(), choices: clean, answer: idx };
+  if (typeof why === 'string' && why.trim()) out.why = why.trim();
+  return out;
 }
 
 export interface GradeResult {
@@ -81,6 +85,7 @@ export function shuffleChoices(card: GateCard, seed = Date.now()): GateCard {
         q: q.q,
         choices: order.map((i) => q.choices[i]!),
         answer: order.indexOf(q.answer),
+        ...(q.why ? { why: q.why } : {}),
       };
     }),
   };

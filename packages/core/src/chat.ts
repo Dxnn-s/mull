@@ -17,13 +17,15 @@ function transcript(history: ChatMessage[]): string {
 }
 
 /** One completion with the transcript flattened into the user turn. */
+const CHAT_TIMEOUT_MS = 60_000;
+
 export async function chatReply(history: ChatMessage[], provider: Provider): Promise<string> {
-  return provider.complete({ system: CHAT_SYSTEM, user: transcript(history), maxTokens: 1500 });
+  return provider.complete({ system: CHAT_SYSTEM, user: transcript(history), maxTokens: 1500, timeoutMs: CHAT_TIMEOUT_MS });
 }
 
 /** Same, streamed. Falls back to one completion when the provider cannot stream. */
 export async function chatStream(history: ChatMessage[], provider: Provider, onDelta: (text: string) => void): Promise<string> {
-  const req = { system: CHAT_SYSTEM, user: transcript(history), maxTokens: 1500 };
+  const req = { system: CHAT_SYSTEM, user: transcript(history), maxTokens: 1500, timeoutMs: CHAT_TIMEOUT_MS };
   if (provider.stream) return provider.stream(req, onDelta);
   const full = await provider.complete(req);
   onDelta(full);

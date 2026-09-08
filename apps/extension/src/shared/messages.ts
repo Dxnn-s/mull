@@ -1,9 +1,9 @@
-import type { BlockState, CompletionRequest, ConceptMemory, Settings, Stats, StatsEvent } from '@mull/core/types';
+import type { BlockState, CompletionRequest, ConceptMemory, Correction, Settings, Stats, StatsEvent } from '@mull/core/types';
 
 export type Request =
   | { type: 'complete'; req: CompletionRequest }
   | { type: 'getState' }
-  | { type: 'record'; event?: StatsEvent; rememberConcept?: string; block?: BlockState }
+  | { type: 'record'; event?: StatsEvent; rememberConcept?: string; block?: BlockState; correction?: Correction }
   | { type: 'testKey'; settings: Settings };
 
 export interface State {

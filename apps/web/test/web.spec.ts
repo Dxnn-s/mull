@@ -44,6 +44,32 @@ test('stats page reflects a pass', async ({ page }) => {
   await expect(page.getByText('entropy')).toBeVisible();
 });
 
+test('a miss shows the answer key and "real work" releases with a correction', async ({ page }) => {
+  await page.goto('/');
+  await page.getByLabel('Message').fill('what is torque');
+  await page.keyboard.press('Enter');
+  await page.getByRole('button', { name: /read it/i }).click();
+  await page.getByLabel('A silly one').check();
+  await page.getByLabel('Never').check();
+  await page.getByRole('button', { name: /check answers/i }).click();
+  await expect(page.getByTestId('review')).toContainText('The correct one');
+  await expect(page.getByTestId('review')).toContainText('first sentence');
+  await page.getByRole('button', { name: /real work/i }).click();
+  await expect(page.locator('[data-role="assistant"]')).toContainText('Demo mode answer');
+  await page.goto('/settings');
+  await expect(page.getByTestId('correction-count')).toHaveText('1 row');
+});
+
+test('a hung provider offers send anyway', async ({ page }) => {
+  await page.evaluate(() => localStorage.setItem('mull.settings', JSON.stringify({ provider: 'mock', model: 'slow', conceptMemoryDays: 0 })));
+  await page.goto('/');
+  await page.getByLabel('Message').fill('what is a limit');
+  await page.keyboard.press('Enter');
+  await expect(page.getByTestId('gate-pending')).toBeVisible();
+  await page.getByRole('button', { name: /send anyway/i }).click({ timeout: 10_000 });
+  await expect(page.locator('[data-role="user"]')).toContainText('what is a limit');
+});
+
 test('settings persist and switch palette', async ({ page }) => {
   await page.goto('/settings');
   await page.getByLabel('Atelier Sage').check();

@@ -8,12 +8,15 @@ export type { SessionState, SessionDeps, SessionResult } from './session.ts';
 export {
   EMPTY_STATS,
   applyEvent,
+  addCorrection,
   normalizeStats,
   holdRate,
+  medianCardMs,
   conceptKey,
   rememberPass,
   isRemembered,
   listConcepts,
+  promptHash,
 } from './stats.ts';
 export { classifierSystemPrompt, classifierUserPrompt, gateSystemPrompt, gateUserPrompt } from './prompts.ts';
 export { extractJson } from './json.ts';
@@ -21,7 +24,7 @@ export { chatReply, chatStream, CHAT_SYSTEM } from './chat.ts';
 export { readSse } from './sse.ts';
 export type { ChatMessage } from './chat.ts';
 export { THEME_CSS } from './theme.ts';
-export { PROVIDER_INFO, ANTHROPIC_DEFAULT_MODEL, OPENAI_DEFAULT_MODEL, GEMINI_DEFAULT_MODEL } from './provider-info.ts';
+export { PROVIDER_INFO, ANTHROPIC_DEFAULT_MODEL, OPENAI_DEFAULT_MODEL, GEMINI_DEFAULT_MODEL, COST_LINE, AGE_LINE } from './provider-info.ts';
 export { MockProvider } from './providers/mock.ts';
 export { AnthropicProvider } from './providers/anthropic.ts';
 export { OpenAIProvider } from './providers/openai.ts';
@@ -48,6 +51,6 @@ export function createProvider(settings: Pick<Settings, 'provider' | 'apiKey' | 
     case 'gemini':
       return new GeminiProvider(settings.apiKey.trim(), model, fetchImpl);
     case 'mock':
-      return new MockProvider();
+      return new MockProvider(settings.model === 'slow' ? 20_000 : 0);
   }
 }

@@ -36,9 +36,9 @@ describe('AnthropicProvider', () => {
     usage: { input_tokens: 10, output_tokens: 5 },
   };
 
-  it('sends the right shape: model, system, adaptive thinking, low effort, default fallbacks', async () => {
+  it('sends the right shape on a thinking model: system, adaptive thinking, low effort, default fallbacks', async () => {
     const { calls, fetchImpl } = fakeFetch(ok);
-    const p = new AnthropicProvider('sk-ant-test', '', { fetch: fetchImpl });
+    const p = new AnthropicProvider('sk-ant-test', 'claude-opus-5', { fetch: fetchImpl });
     const text = await p.complete({ system: 'S', user: 'U', maxTokens: 200 });
     expect(text).toContain('"verdict":"LAZY"');
     expect(calls).toHaveLength(1);
@@ -48,7 +48,7 @@ describe('AnthropicProvider', () => {
     expect(c.headers['anthropic-beta']).toContain('server-side-fallback-2026-07-01');
     expect(c.body).toMatchObject({
       model: 'claude-opus-5',
-      max_tokens: 200,
+      max_tokens: 512,
       system: 'S',
       thinking: { type: 'adaptive' },
       output_config: { effort: 'low' },
@@ -78,8 +78,8 @@ describe('OpenAIProvider', () => {
     expect(c.url).toBe('https://api.openai.com/v1/chat/completions');
     expect(c.headers['authorization']).toBe('Bearer sk-test');
     expect(c.body).toMatchObject({
-      model: 'gpt-4o-mini',
-      max_tokens: 50,
+      model: 'gpt-5-nano',
+      max_completion_tokens: 50,
       response_format: { type: 'json_object' },
       messages: [
         { role: 'system', content: 'S' },
@@ -99,7 +99,7 @@ describe('GeminiProvider', () => {
     const text = await new GeminiProvider('AIza-test', '', fetchImpl).complete({ system: 'S', user: 'U', maxTokens: 70 });
     expect(text).toBe('{"b":2}');
     const c = calls[0]!;
-    expect(c.url).toBe('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent');
+    expect(c.url).toBe('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent');
     expect(c.headers['x-goog-api-key']).toBe('AIza-test');
     expect(c.body).toMatchObject({
       systemInstruction: { parts: [{ text: 'S' }] },

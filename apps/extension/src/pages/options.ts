@@ -1,7 +1,7 @@
-import { PROVIDER_INFO } from '@mull/core/provider-info';
+import { AGE_LINE, COST_LINE, PROVIDER_INFO } from '@mull/core/provider-info';
 import type { Settings } from '@mull/core/types';
 import { THEME_CSS } from '../shared/theme.ts';
-import { loadAll, saveSettings } from '../shared/storage.ts';
+import { loadAll, savePartial, saveSettings } from '../shared/storage.ts';
 import { send } from '../shared/messages.ts';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -35,7 +35,9 @@ function fill(s: Settings) {
 
 function syncProviderHints(id: Settings['provider']) {
   const info = PROVIDER_INFO[id];
-  $('keyHint').textContent = info.keyHint ? `looks like ${info.keyHint}` : 'no key needed for demo mode';
+  $('keyHint').textContent = info.keyHint ? `looks like ${info.keyHint} · ${info.note}` : info.note;
+  $('costLine').textContent = id === 'mock' ? '' : COST_LINE;
+  $('ageLine').textContent = id === 'mock' ? '' : AGE_LINE;
   $<HTMLInputElement>('model').placeholder = info.defaultModel;
   $('models').innerHTML = info.models.map((m) => `<option value="${m}">`).join('');
 }
@@ -77,10 +79,28 @@ function read(base: Settings): Settings {
 
 async function main() {
   $('theme').textContent = THEME_CSS;
-  const { settings } = await loadAll();
+  const { settings, stats } = await loadAll();
   document.documentElement.dataset.palette = settings.palette;
   document.documentElement.dataset.theme = settings.theme;
   fill(settings);
+
+  $('correctionCount').textContent = `${stats.corrections.length} row${stats.corrections.length === 1 ? '' : 's'}`;
+  $('exportCorrections').addEventListener('click', async () => {
+    const out = $<HTMLTextAreaElement>('correctionsOut');
+    out.value = JSON.stringify(stats.corrections, null, 2);
+    out.hidden = false;
+    try {
+      await navigator.clipboard.writeText(out.value);
+      $('status').textContent = 'corrections copied';
+    } catch {
+      $('status').textContent = 'select the box and copy';
+    }
+  });
+  $('clearCorrections').addEventListener('click', async () => {
+    await savePartial({ stats: { ...stats, corrections: [] } });
+    $('correctionCount').textContent = '0 rows';
+    $<HTMLTextAreaElement>('correctionsOut').hidden = true;
+  });
 
   $<HTMLSelectElement>('provider').addEventListener('change', (e) => syncProviderHints((e.target as HTMLSelectElement).value as Settings['provider']));
   document.querySelectorAll<HTMLInputElement>('input[name="palette"], input[name="theme"]').forEach((el) =>

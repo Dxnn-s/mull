@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { createProvider } from '@mull/core';
 import { chatStream, type ChatMessage } from '@mull/core/chat';
 import { GateSession, type SessionResult, type SessionState } from '@mull/core/session';
-import { applyEvent, rememberPass } from '@mull/core/stats';
+import { addCorrection, applyEvent, rememberPass } from '@mull/core/stats';
 import { GateCard } from '@/components/GateCard';
 import { useStore } from '@/lib/store';
 
@@ -38,21 +38,28 @@ export default function ChatPage() {
       setError(err instanceof Error ? err.message : String(err));
       return;
     }
-    session.current = new GateSession({
+    const s = new GateSession({
       provider,
       settings: store.settings,
       memory: store.memory,
       block: store.block,
       site: 'web',
     });
+    session.current = s;
     setGate({ kind: 'classifying' });
-    handle(await session.current.submit(text), text);
+    const result = await s.submit(text);
+    // A send-anyway or cancel may have retired this session while we waited.
+    if (session.current !== s || result.state.kind === 'idle') return;
+    handle(result);
   }
 
-  function handle(result: SessionResult, original: string) {
+  function handle(result: SessionResult) {
     if (!store) return;
     const patch: Parameters<typeof update>[0] = {};
-    if (result.event) patch.stats = applyEvent(store.stats, result.event);
+    let stats = store.stats;
+    if (result.event) stats = applyEvent(stats, result.event);
+    if (result.correction) stats = addCorrection(stats, result.correction);
+    if (stats !== store.stats) patch.stats = stats;
     if (result.rememberConcept) patch.memory = rememberPass(store.memory, result.rememberConcept);
     if (result.block) patch.block = result.block;
     if (Object.keys(patch).length) update(patch);
@@ -60,11 +67,16 @@ export default function ChatPage() {
     const st = result.state;
     if (st.kind === 'release') {
       setGate(null);
+      session.current = null;
       void answer(st.prompt);
       return;
     }
+    if (st.kind === 'idle') {
+      setGate(null);
+      session.current = null;
+      return;
+    }
     setGate(st);
-    void original;
   }
 
   async function answer(prompt: string) {
@@ -90,11 +102,15 @@ export default function ChatPage() {
 
   const s = session.current;
   const handlers = {
-    onRead: () => s && handle(s.startQuiz(), draft),
-    onAnswer: (a: Array<number | null>) => s && handle(s.answer(a), draft),
-    onSkip: () => s && handle(s.skip(), draft),
-    onSendAnyway: () => s && handle(s.releaseAfterError(), draft),
-    onCancel: () => setGate(null),
+    onRead: () => s && handle(s.startQuiz()),
+    onAnswer: (a: Array<number | null>) => s && handle(s.answer(a)),
+    onSkip: () => s && handle(s.skip()),
+    onLegit: () => s && handle(s.markLegit()),
+    onSendAnyway: () => s && handle(s.state.kind === 'error' ? s.releaseAfterError() : s.sendAnyway()),
+    onCancel: () => {
+      if (s) handle(s.cancel());
+      else setGate(null);
+    },
   };
 
   return (

@@ -4,27 +4,33 @@ export interface SiteAdapter {
   id: SiteId;
   composer: string[];
   send: string[];
+  /** Selectors that mean "the site is busy", so a match is not a send button. */
+  busy?: string[];
 }
 
 /**
  * Selectors are ordered most-specific first and will need maintenance when the
- * sites ship new composers. Keep several fallbacks per site.
+ * sites ship new composers. Sources: 2026 userscripts and open-source extensions
+ * (see Brain/projects/mull/ideas-2026-09-08.md finding 1). No textarea fallbacks
+ * on ChatGPT: its hidden accessibility textarea matches but React ignores it, and
+ * a match there would un-gate every prompt with no error.
  */
 const SITES: SiteAdapter[] = [
   {
     id: 'chatgpt',
-    composer: ['#prompt-textarea', 'div[contenteditable="true"][data-id="root"]', 'textarea[data-id]', 'form textarea'],
-    send: ['button[data-testid="send-button"]', 'button[aria-label="Send prompt"]', 'form button[type="submit"]'],
+    composer: ['#prompt-textarea', 'div.ProseMirror[contenteditable="true"]', 'div[role="textbox"][contenteditable="true"]'],
+    send: ['button[data-testid="send-button"]', '#composer-submit-button', 'button[aria-label="Send prompt"]'],
+    busy: ['button[data-testid="stop-button"]'],
   },
   {
     id: 'claude',
-    composer: ['div[contenteditable="true"].ProseMirror', 'div[contenteditable="true"][data-placeholder]', 'fieldset div[contenteditable="true"]'],
-    send: ['button[aria-label="Send message"]', 'button[aria-label="Send Message"]', 'fieldset button[type="button"]:has(svg)'],
+    composer: ['[data-testid="composer"] [contenteditable="true"]', 'div[contenteditable="true"].ProseMirror', 'div[contenteditable="true"][data-placeholder]', 'fieldset div[contenteditable="true"]'],
+    send: ['button[data-testid="send-button"]', 'button[aria-label="Send message"]', 'button[aria-label*="Send" i]'],
   },
   {
     id: 'gemini',
-    composer: ['div.ql-editor[contenteditable="true"]', 'rich-textarea div[contenteditable="true"]', 'div[contenteditable="true"][aria-label*="prompt" i]'],
-    send: ['button.send-button', 'button[aria-label="Send message"]', 'button[mattooltip="Send message"]'],
+    composer: ['.text-input-field [contenteditable="true"]', 'input-area-v2 [contenteditable="true"]', 'div.ql-editor[contenteditable="true"]', 'rich-textarea div[contenteditable="true"]'],
+    send: ['.send-button', '[data-test-id="send-button"]', 'button[aria-label="Send message"]'],
   },
 ];
 
@@ -40,20 +46,30 @@ export function detectSite(): SiteAdapter | null {
 }
 
 export function findComposer(site: SiteAdapter): HTMLElement | null {
-  return first(site.composer);
+  const el = first(site.composer);
+  // A textarea on chatgpt is the hidden accessibility copy; never treat it as the composer.
+  if (site.id === 'chatgpt' && el instanceof HTMLTextAreaElement) return null;
+  return el;
 }
 
 export function findSend(site: SiteAdapter): HTMLButtonElement | null {
-  return first(site.send) as HTMLButtonElement | null;
+  if (site.busy && first(site.busy)) return null;
+  const el = first(site.send);
+  if (!el) return null;
+  // Gemini renders send as a custom element wrapping a real button.
+  if (!(el instanceof HTMLButtonElement)) return el.querySelector('button') ?? (el as HTMLButtonElement);
+  return el;
 }
 
+/** First selector that matches a visible element (has a box). */
 function first(selectors: string[]): HTMLElement | null {
   for (const s of selectors) {
     try {
-      const el = document.querySelector<HTMLElement>(s);
-      if (el) return el;
+      for (const el of Array.from(document.querySelectorAll<HTMLElement>(s))) {
+        if (el.getClientRects().length > 0) return el;
+      }
     } catch {
-      // :has() may be unsupported on old builds; ignore that selector.
+      // Unsupported selector on this build; ignore it.
     }
   }
   return null;

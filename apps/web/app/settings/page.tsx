@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { createProvider } from '@mull/core';
 import { classify } from '@mull/core/classify';
-import { PROVIDER_INFO } from '@mull/core/provider-info';
+import { AGE_LINE, COST_LINE, PROVIDER_INFO } from '@mull/core/provider-info';
 import type { Settings } from '@mull/core/types';
 import { useStore } from '@/lib/store';
 
@@ -50,7 +50,9 @@ export default function SettingsPage() {
             <div className="field">
               <label>API key</label>
               <input className="input" type="password" autoComplete="off" value={s.apiKey} onChange={(e) => set({ apiKey: e.target.value })} />
-              <div className="hint">looks like {info.keyHint}</div>
+              <div className="hint">looks like {info.keyHint} · {info.note}</div>
+              <div className="hint">{COST_LINE}</div>
+              <div className="hint">{AGE_LINE}</div>
             </div>
             <div className="field">
               <label>Model</label>
@@ -126,6 +128,16 @@ export default function SettingsPage() {
             <label><input type="radio" name="theme" checked={s.theme === 'dark'} onChange={() => set({ theme: 'dark' })} /> dark</label>
             <label><input type="radio" name="theme" checked={s.theme === 'light'} onChange={() => set({ theme: 'light' })} /> light</label>
           </div>
+        </div>
+      </section>
+
+      <section className="card" style={{ marginBottom: 16 }}>
+        <h2 style={{ fontSize: 22, margin: '0 0 8px' }}>Corrections</h2>
+        <p className="hint" style={{ margin: '0 0 8px' }}>Every &quot;This was real work&quot; tap lands here as a hashed row, never the prompt text. Export them as seed-label candidates for the classifier.</p>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <span className="mono muted" style={{ fontSize: 12 }} data-testid="correction-count">{store.stats.corrections.length} row{store.stats.corrections.length === 1 ? '' : 's'}</span>
+          <button className="btn" type="button" onClick={() => setSaved(JSON.stringify(store.stats.corrections))}>Show JSON</button>
+          <button className="btn ghost" type="button" onClick={() => update({ stats: { ...store.stats, corrections: [] } })}>Clear</button>
         </div>
       </section>
 

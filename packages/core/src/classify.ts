@@ -8,11 +8,13 @@ export async function classify(
   prompt: string,
   settings: Pick<Settings, 'subjects' | 'strictness'>,
   provider: Provider,
+  timeoutMs?: number,
 ): Promise<Classification> {
   const raw = await provider.complete({
     system: classifierSystemPrompt(settings),
     user: classifierUserPrompt(prompt),
     maxTokens: 200,
+    ...(timeoutMs ? { timeoutMs } : {}),
   });
   return normalizeClassification(extractJson<Partial<Classification>>(raw));
 }

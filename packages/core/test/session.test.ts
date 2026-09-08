@@ -70,7 +70,9 @@ describe('GateSession', () => {
     if (q.state.kind !== 'quiz') throw new Error();
     const wrong = q.state.card.questions.map((qq) => (qq.answer + 1) % qq.choices.length);
     const r = session.answer(wrong);
-    expect(r.state).toMatchObject({ kind: 'explain', attempts: 1, missed: [0, 1] });
+    expect(r.state).toMatchObject({ kind: 'explain', attempts: 1 });
+    if (r.state.kind !== 'explain') throw new Error();
+    expect(r.state.review).toHaveLength(2);
     expect(r.event?.outcome).toBe('failed');
   });
 

@@ -18,6 +18,8 @@ export interface QuizQuestion {
   choices: string[];
   /** Index into choices. */
   answer: number;
+  /** One line on why the correct choice is right. Shown after a miss. Optional so old cards still render. */
+  why?: string;
 }
 
 export interface GateCard {
@@ -27,12 +29,22 @@ export interface GateCard {
   questions: QuizQuestion[];
 }
 
-export type ProviderId = 'anthropic' | 'openai' | 'gemini' | 'mock';
+/** What the user got wrong on the last attempt, in the order the questions were shown then. */
+export interface ReviewItem {
+  q: string;
+  picked: string | null;
+  correct: string;
+  why?: string;
+}
+
+export type ProviderId = 'openai' | 'gemini' | 'anthropic' | 'mock';
 
 export interface CompletionRequest {
   system: string;
   user: string;
   maxTokens?: number;
+  /** Abort after this long. Adapters turn it into a fetch signal or an SDK timeout. */
+  timeoutMs?: number;
 }
 
 export interface Provider {
@@ -64,7 +76,7 @@ export interface Settings {
   theme: 'dark' | 'light';
 }
 
-export type Outcome = 'released' | 'passed' | 'failed' | 'skipped' | 'blocked' | 'allowlisted' | 'remembered';
+export type Outcome = 'released' | 'passed' | 'failed' | 'skipped' | 'cancelled' | 'blocked' | 'allowlisted' | 'remembered';
 
 export interface StatsEvent {
   ts: number;
@@ -74,6 +86,22 @@ export interface StatsEvent {
   outcome: Outcome;
   concept?: string;
   attempts?: number;
+  /** Milliseconds the card was on screen before this outcome. */
+  ms?: number;
+  /** Set when classification took longer than 8 s. */
+  slow?: boolean;
+  /** Why a release happened when it was not the classifier's call, e.g. "user-legit", "timeout". */
+  reason?: string;
+}
+
+/** A user's correction of the classifier. Never stores prompt text. */
+export interface Correction {
+  ts: number;
+  /** djb2 hash of the trimmed lowercased prompt, so the same prompt is recognizable without keeping it. */
+  hash: string;
+  verdict: Verdict;
+  label: Verdict;
+  concept?: string;
 }
 
 export interface ConceptMemory {
@@ -86,14 +114,17 @@ export interface Stats {
   passed: number;
   failed: number;
   skipped: number;
+  cancelled: number;
   blocked: number;
   allowlisted: number;
   remembered: number;
-  /** Consecutive gates passed without a skip. */
+  /** Consecutive gates passed without a skip or a cancel. */
   streak: number;
   bestStreak: number;
   /** Last 200 events, newest last. */
   recent: StatsEvent[];
+  /** Last 200 user corrections, newest last. */
+  corrections: Correction[];
 }
 
 export interface BlockState {

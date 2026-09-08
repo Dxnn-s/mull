@@ -1,6 +1,7 @@
 import type { CompletionRequest, Provider } from '../types.ts';
 import { GEMINI_DEFAULT_MODEL } from '../provider-info.ts';
 import { readSse } from '../sse.ts';
+import { fetchWithTimeout } from './fetch-timeout.ts';
 
 export { GEMINI_DEFAULT_MODEL };
 
@@ -38,15 +39,20 @@ export class GeminiProvider implements Provider {
   private async request(req: CompletionRequest, method: string, json: boolean): Promise<Response> {
     const model = this.model || GEMINI_DEFAULT_MODEL;
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:${method}`;
-    const res = await this.fetchImpl(url, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', 'x-goog-api-key': this.apiKey },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: req.system }] },
-        contents: [{ role: 'user', parts: [{ text: req.user }] }],
-        generationConfig: { maxOutputTokens: req.maxTokens ?? 800, ...(json ? { responseMimeType: 'application/json' } : {}) },
-      }),
-    });
+    const res = await fetchWithTimeout(
+      this.fetchImpl,
+      url,
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-goog-api-key': this.apiKey },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: req.system }] },
+          contents: [{ role: 'user', parts: [{ text: req.user }] }],
+          generationConfig: { maxOutputTokens: req.maxTokens ?? 800, ...(json ? { responseMimeType: 'application/json' } : {}) },
+        }),
+      },
+      req.timeoutMs,
+    );
     if (!res.ok) throw new Error(`Gemini ${res.status}: ${(await res.text()).slice(0, 300)}`);
     return res;
   }

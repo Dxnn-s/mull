@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Mull",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Opal for AI. Catches lazy prompts to ChatGPT, Claude, and Gemini and makes you pass a short quiz on the concept before the answer comes through. No telemetry, keys stay on your device.",
   "permissions": ["storage"],
   "host_permissions": [

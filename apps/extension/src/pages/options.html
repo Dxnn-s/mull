@@ -37,7 +37,7 @@
   <section>
     <h2>Provider</h2>
     <div class="field"><label for="provider">Provider</label><select id="provider"></select></div>
-    <div class="field"><label for="apiKey">API key</label><input type="password" id="apiKey" autocomplete="off"><div class="hint" id="keyHint"></div></div>
+    <div class="field"><label for="apiKey">API key</label><input type="password" id="apiKey" autocomplete="off"><div class="hint" id="keyHint"></div><div class="hint" id="costLine"></div><div class="hint" id="ageLine"></div></div>
     <div class="field"><label for="model">Model</label><input type="text" id="model" list="models"><datalist id="models"></datalist><div class="hint">Leave blank for the provider default. Cheaper models work fine for the classifier.</div></div>
     <div class="field"><label></label><div><button id="test">Test key</button> <span id="testResult" class="hint"></span></div></div>
   </section>
@@ -75,6 +75,13 @@
       <label><input type="radio" name="theme" value="dark"> dark</label>
       <label><input type="radio" name="theme" value="light"> light</label>
     </div></div>
+  </section>
+
+  <section>
+    <h2>Corrections</h2>
+    <p class="hint" style="margin:0 0 8px">Every "This was real work" tap lands here as a hashed row (never the prompt text). Export them as seed-label candidates for the classifier.</p>
+    <div class="field"><label>Rows</label><div><span id="correctionCount" class="hint">0</span> <button id="exportCorrections">Copy as JSON</button> <button id="clearCorrections">Clear</button></div></div>
+    <textarea id="correctionsOut" readonly style="min-height:80px" hidden></textarea>
   </section>
 
   <div class="actions"><button class="primary" id="save">Save</button><span id="status"></span></div>

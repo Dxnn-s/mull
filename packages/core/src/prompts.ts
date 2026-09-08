@@ -46,9 +46,10 @@ Rules for the questions:
 - Test the concept, not trivia about your wording.
 - Exactly ${questionsPerGate} question${questionsPerGate === 1 ? '' : 's'}, each with 4 choices, exactly one correct, distractors plausible.
 - A student who read the explanation carefully should get them right. A student who skimmed should not.
+- Each question carries a one-sentence "why": why the correct choice is right, in plain words. It is shown after a miss.
 
 Reply with only a JSON object, no prose:
-{"concept":"string","explanation":"string","questions":[{"q":"string","choices":["a","b","c","d"],"answer":0}]}`;
+{"concept":"string","explanation":"string","questions":[{"q":"string","choices":["a","b","c","d"],"answer":0,"why":"string"}]}`;
 }
 
 export function gateUserPrompt(prompt: string, concept: string, subject: string | null): string {

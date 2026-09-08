@@ -1,5 +1,5 @@
 import type { SessionState } from '@mull/core/session';
-import type { Settings } from '@mull/core/types';
+import type { ReviewItem, Settings } from '@mull/core/types';
 import { THEME_CSS } from '../shared/theme.ts';
 
 export interface OverlayHandlers {
@@ -8,6 +8,7 @@ export interface OverlayHandlers {
   onSkip(): void;
   onCancel(): void;
   onSendAnyway(): void;
+  onLegit(): void;
 }
 
 const OVERLAY_CSS = `
@@ -22,26 +23,32 @@ ${THEME_CSS}
 h1 { font-family: var(--serif); font-weight: 400; font-size: 30px; line-height: 1.1; margin: 10px 0 4px; letter-spacing: -0.01em; }
 .sub { color: var(--fg-muted); font-size: 13px; margin: 0 0 16px; }
 p.body { font-size: 15.5px; line-height: 1.55; margin: 0 0 14px; }
-.example { font-family: var(--mono); font-size: 12.5px; color: var(--fg-muted); border-left: 2px solid var(--accent-border); padding: 4px 10px; margin: 0 0 16px; }
 .q { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin: 0 0 10px; background: var(--surface); }
-.q.missed { border-color: var(--danger); }
 .q .qt { font-size: 14.5px; margin: 0 0 8px; }
 .q label { display: flex; gap: 10px; align-items: flex-start; padding: 6px 8px; border-radius: 8px; cursor: pointer; font-size: 14px; }
 .q label:hover { background: var(--surface-2); }
 .q input { accent-color: var(--accent); margin-top: 3px; }
+.review { border: 1px solid rgba(239,68,68,0.35); background: rgba(239,68,68,0.08); border-radius: 10px; padding: 10px 14px; margin: 0 0 14px; font-size: 13.5px; }
+.review .rt { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--danger); margin: 0 0 6px; }
+.review .ri { margin: 0 0 8px; }
+.review .ri:last-child { margin: 0; }
+.review .rq { margin: 0 0 2px; }
+.review s { color: var(--fg-muted); }
+.review .ok { color: var(--live); }
+.review .why { color: var(--fg-muted); font-size: 12.5px; }
 .row { display: flex; gap: 10px; align-items: center; justify-content: space-between; margin-top: 14px; flex-wrap: wrap; }
-.row .left { display: flex; gap: 10px; align-items: center; }
+.row .left { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 button { font-family: var(--sans); font-size: 14px; border-radius: 10px; padding: 9px 16px; cursor: pointer; border: 1px solid var(--border); background: var(--surface-2); color: var(--fg); }
 button.primary { background: var(--accent); border-color: var(--accent); color: #0a0a0e; font-weight: 600; }
 button.primary:hover { background: var(--accent-bright); }
 button.ghost { background: transparent; border-color: transparent; color: var(--fg-muted); padding: 9px 8px; }
 button.ghost:hover { color: var(--fg); }
 .foot { font-family: var(--mono); font-size: 11px; color: var(--fg-muted); margin-top: 12px; }
-.banner { background: var(--accent-soft); border: 1px solid var(--accent-border); border-radius: 10px; padding: 8px 12px; font-size: 13px; margin: 0 0 14px; }
-.banner.bad { background: rgba(239,68,68,0.10); border-color: rgba(239,68,68,0.35); }
-.pill { position: fixed; right: 18px; bottom: 18px; z-index: 2147483646; font-family: var(--mono); font-size: 12px; color: var(--fg); background: var(--bg); border: 1px solid var(--accent-border); border-radius: 999px; padding: 8px 14px; box-shadow: var(--shadow); display: flex; align-items: center; gap: 8px; }
+.pill { position: fixed; right: 18px; bottom: 18px; z-index: 2147483646; font-family: var(--mono); font-size: 12px; color: var(--fg); background: var(--bg); border: 1px solid var(--accent-border); border-radius: 999px; padding: 8px 14px; box-shadow: var(--shadow); display: flex; align-items: center; gap: 10px; }
 .pill .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: pulse 1s infinite alternate; }
+.pill a { color: var(--accent); cursor: pointer; opacity: 0; animation: appear 0s 4s forwards; text-decoration: underline; }
 @keyframes pulse { from { opacity: 0.4 } to { opacity: 1 } }
+@keyframes appear { to { opacity: 1 } }
 .big { font-family: var(--serif); font-size: 44px; margin: 8px 0 2px; }
 `;
 
@@ -86,25 +93,25 @@ export class Overlay {
   private html(state: SessionState): string {
     switch (state.kind) {
       case 'classifying':
-        return `<div class="pill"><span class="dot"></span>mull is reading your prompt</div>`;
+        return `<div class="pill" data-testid="pill"><span class="dot"></span>mull is reading your prompt <a data-act="send-anyway">send anyway</a></div>`;
       case 'loading-card':
-        return `<div class="pill"><span class="dot"></span>writing a 40-second lesson on ${esc(state.classification.concept ?? 'this')}</div>`;
+        return `<div class="pill" data-testid="pill"><span class="dot"></span>writing a 40-second lesson on ${esc(state.classification.concept ?? 'this')} <a data-act="send-anyway">send anyway</a></div>`;
       case 'explain': {
-        const banner = state.missed.length
-          ? `<div class="banner bad">Not quite. ${state.missed.length === 1 ? 'One question' : `${state.missed.length} questions`} missed. Read it again, then retry.</div>`
-          : '';
         return `<div class="scrim"><div class="card">
           <div class="eyebrow"><span class="dot"></span>mull · think first</div>
           <h1>${esc(state.card.concept)}</h1>
           <p class="sub">${esc(state.classification.reason || 'This looks like something worth understanding before you get the answer.')}</p>
-          ${banner}
+          ${reviewHtml(state.review, 'Not quite. Read it again, then retry. The choices will be in a new order.')}
           <p class="body">${esc(state.card.explanation)}</p>
           <div class="row">
             <div class="left">
               <button class="primary" data-act="read">I've read it, quiz me</button>
               ${this.settings.hardMode.enabled ? '' : '<button class="ghost" data-act="skip">Skip (counts against you)</button>'}
             </div>
-            <button class="ghost" data-act="cancel">Cancel</button>
+            <div class="left">
+              <button class="ghost" data-act="legit" title="Release this prompt and record that the gate was wrong">This was real work</button>
+              <button class="ghost" data-act="cancel">Cancel</button>
+            </div>
           </div>
           <div class="foot">${state.card.questions.length} question${state.card.questions.length === 1 ? '' : 's'} · pass = every one right · your prompt is untouched</div>
         </div></div>`;
@@ -128,7 +135,10 @@ export class Overlay {
                 <button class="primary" type="submit">Check answers</button>
                 ${this.settings.hardMode.enabled ? '' : '<button class="ghost" type="button" data-act="skip">Skip</button>'}
               </div>
-              <button class="ghost" type="button" data-act="cancel">Cancel</button>
+              <div class="left">
+                <button class="ghost" type="button" data-act="legit">This was real work</button>
+                <button class="ghost" type="button" data-act="cancel">Cancel</button>
+              </div>
             </div>
           </form>
         </div></div>`;
@@ -136,8 +146,9 @@ export class Overlay {
         return `<div class="scrim"><div class="card">
           <div class="eyebrow"><span class="dot"></span>mull · hard mode</div>
           <h1>Blocked.</h1>
-          <p class="sub">Two misses in hard mode. Go think without the machine for a bit.</p>
+          <p class="sub">Misses in hard mode. Go think without the machine for a bit. The answers you missed are below so this is not a dead end.</p>
           <div class="big" data-countdown="${state.until}">--:--</div>
+          ${reviewHtml(state.review, 'What you missed')}
           <div class="row"><div></div><button class="ghost" data-act="cancel">Close</button></div>
         </div></div>`;
       case 'error':
@@ -168,6 +179,7 @@ export class Overlay {
       else if (act === 'skip') h.onSkip();
       else if (act === 'cancel') h.onCancel();
       else if (act === 'send-anyway') h.onSendAnyway();
+      else if (act === 'legit') h.onLegit();
       return;
     }
     if (target.closest('button[type="submit"]')) {
@@ -194,6 +206,22 @@ export class Overlay {
     };
     tick();
   }
+}
+
+function reviewHtml(review: ReviewItem[], title: string): string {
+  if (!review.length) return '';
+  return `<div class="review" data-testid="review">
+    <div class="rt">${esc(title)}</div>
+    ${review
+      .map(
+        (r) => `<div class="ri">
+        <div class="rq">${esc(r.q)}</div>
+        <div>${r.picked ? `you picked <s>${esc(r.picked)}</s> · ` : 'no answer · '}answer: <span class="ok">${esc(r.correct)}</span></div>
+        ${r.why ? `<div class="why">${esc(r.why)}</div>` : ''}
+      </div>`,
+      )
+      .join('')}
+  </div>`;
 }
 
 function esc(s: string): string {

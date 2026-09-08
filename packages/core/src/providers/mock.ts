@@ -4,12 +4,15 @@ import type { CompletionRequest, Provider } from '../types.ts';
  * Deterministic stand-in for tests and for the web app's "try it without a key" mode.
  * Classifies by keyword, and answers gate requests with a fixed card whose concept
  * echoes the request. Good enough to exercise every state transition.
+ * `delayMs` simulates a slow or hung provider (model "slow" in settings = 20 s).
  */
 export class MockProvider implements Provider {
   id = 'mock';
   calls: CompletionRequest[] = [];
   /** Optional override so a test can force a reply. */
   reply: ((req: CompletionRequest) => string) | null = null;
+
+  constructor(private readonly delayMs = 0) {}
 
   /** Streams the canned reply word by word so the UI's streaming path gets exercised. */
   async stream(req: CompletionRequest, onDelta: (text: string) => void): Promise<string> {
@@ -23,6 +26,17 @@ export class MockProvider implements Provider {
 
   async complete(req: CompletionRequest): Promise<string> {
     this.calls.push(req);
+    if (this.delayMs > 0) {
+      await new Promise<void>((resolve, reject) => {
+        const t = setTimeout(resolve, this.delayMs);
+        if (req.timeoutMs && req.timeoutMs < this.delayMs) {
+          setTimeout(() => {
+            clearTimeout(t);
+            reject(new Error(`timed out after ${Math.round(req.timeoutMs! / 1000)}s`));
+          }, req.timeoutMs);
+        }
+      });
+    }
     if (this.reply) return this.reply(req);
     if (req.system.startsWith('You classify')) return classifyByKeyword(req.user);
     if (req.system.startsWith('You are a tutor')) return fixedCard(req.user);
@@ -55,9 +69,9 @@ function fixedCard(user: string): string {
     concept,
     explanation: `${concept} is the idea under your question. Here is the shape of it in plain words. It shows up whenever the pieces depend on each other. A concrete example: a different case than yours, worked the same way. Once you see the pattern, the answer is the easy part.`,
     questions: [
-      { q: `Which statement about ${concept} is right?`, choices: ['The correct one', 'A plausible wrong one', 'Another wrong one', 'A silly one'], answer: 0 },
-      { q: `When would you use ${concept}?`, choices: ['Never', 'When the pieces depend on each other', 'Only on Tuesdays', 'When the answer is given'], answer: 1 },
-      { q: `What is the easy part once you see the pattern?`, choices: ['The setup', 'The answer', 'The reading', 'The quiz'], answer: 1 },
+      { q: `Which statement about ${concept} is right?`, choices: ['The correct one', 'A plausible wrong one', 'Another wrong one', 'A silly one'], answer: 0, why: 'The explanation said so in its first sentence.' },
+      { q: `When would you use ${concept}?`, choices: ['Never', 'When the pieces depend on each other', 'Only on Tuesdays', 'When the answer is given'], answer: 1, why: 'It shows up whenever the pieces depend on each other.' },
+      { q: `What is the easy part once you see the pattern?`, choices: ['The setup', 'The answer', 'The reading', 'The quiz'], answer: 1, why: 'Once you see the pattern, the answer is the easy part.' },
     ],
   });
 }
