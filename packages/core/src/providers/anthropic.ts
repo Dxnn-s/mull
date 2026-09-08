@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import type { CompletionRequest, Provider } from '../types.ts';
-
 import { ANTHROPIC_DEFAULT_MODEL } from '../provider-info.ts';
+
 export { ANTHROPIC_DEFAULT_MODEL };
 
 /**
@@ -30,25 +30,40 @@ export class AnthropicProvider implements Provider {
     });
   }
 
-  async complete(req: CompletionRequest): Promise<string> {
-    const response = await this.client.beta.messages.create({
+  private params(req: CompletionRequest) {
+    return {
       model: this.model || ANTHROPIC_DEFAULT_MODEL,
       max_tokens: req.maxTokens ?? 800,
-      betas: ['server-side-fallback-2026-07-01'],
-      fallbacks: 'default',
-      thinking: { type: 'adaptive' },
-      output_config: { effort: 'low' },
+      betas: ['server-side-fallback-2026-07-01' as const],
+      fallbacks: 'default' as const,
+      thinking: { type: 'adaptive' as const },
+      output_config: { effort: 'low' as const },
       system: req.system,
-      messages: [{ role: 'user', content: req.user }],
-    });
-    if (response.stop_reason === 'refusal') {
-      throw new Error(`Anthropic refused: ${response.stop_details?.explanation ?? 'no explanation'}`);
-    }
-    const text = response.content
-      .filter((b): b is Extract<(typeof response.content)[number], { type: 'text' }> => b.type === 'text')
-      .map((b) => b.text)
-      .join('');
-    if (!text) throw new Error('Anthropic reply had no text');
-    return text;
+      messages: [{ role: 'user' as const, content: req.user }],
+    };
   }
+
+  async complete(req: CompletionRequest): Promise<string> {
+    const response = await this.client.beta.messages.create(this.params(req));
+    return textOf(response);
+  }
+
+  async stream(req: CompletionRequest, onDelta: (text: string) => void): Promise<string> {
+    const stream = this.client.beta.messages.stream(this.params(req));
+    stream.on('text', onDelta);
+    const response = await stream.finalMessage();
+    return textOf(response);
+  }
+}
+
+function textOf(response: Anthropic.Beta.BetaMessage): string {
+  if (response.stop_reason === 'refusal') {
+    throw new Error(`Anthropic refused: ${response.stop_details?.explanation ?? 'no explanation'}`);
+  }
+  const text = response.content
+    .filter((b): b is Anthropic.Beta.BetaTextBlock => b.type === 'text')
+    .map((b) => b.text)
+    .join('');
+  if (!text) throw new Error('Anthropic reply had no text');
+  return text;
 }

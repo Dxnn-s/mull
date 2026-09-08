@@ -7,14 +7,25 @@ export interface ChatMessage {
 
 export const CHAT_SYSTEM = `You are Mull, a plain-spoken assistant inside a study app. Answer the user's latest message directly and briefly. Short paragraphs, no headers, minimal markdown. When the question is about a concept, give the answer and one line on why it works, then stop.`;
 
-/**
- * The web app's own chat, after the gate has released the prompt. v0 keeps it
- * simple: one completion with the transcript flattened into the user turn.
- */
+function transcript(history: ChatMessage[]): string {
+  return (
+    history
+      .slice(-12)
+      .map((m) => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`)
+      .join('\n\n') + '\n\nAssistant:'
+  );
+}
+
+/** One completion with the transcript flattened into the user turn. */
 export async function chatReply(history: ChatMessage[], provider: Provider): Promise<string> {
-  const transcript = history
-    .slice(-12)
-    .map((m) => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`)
-    .join('\n\n');
-  return provider.complete({ system: CHAT_SYSTEM, user: `${transcript}\n\nAssistant:`, maxTokens: 1500 });
+  return provider.complete({ system: CHAT_SYSTEM, user: transcript(history), maxTokens: 1500 });
+}
+
+/** Same, streamed. Falls back to one completion when the provider cannot stream. */
+export async function chatStream(history: ChatMessage[], provider: Provider, onDelta: (text: string) => void): Promise<string> {
+  const req = { system: CHAT_SYSTEM, user: transcript(history), maxTokens: 1500 };
+  if (provider.stream) return provider.stream(req, onDelta);
+  const full = await provider.complete(req);
+  onDelta(full);
+  return full;
 }

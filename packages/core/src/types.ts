@@ -38,6 +38,8 @@ export interface CompletionRequest {
 export interface Provider {
   id: ProviderId | string;
   complete(req: CompletionRequest): Promise<string>;
+  /** Optional. Calls onDelta with each text chunk and resolves with the full text. */
+  stream?(req: CompletionRequest, onDelta: (text: string) => void): Promise<string>;
 }
 
 export type Strictness = 'lenient' | 'normal' | 'strict';

@@ -11,6 +11,16 @@ export class MockProvider implements Provider {
   /** Optional override so a test can force a reply. */
   reply: ((req: CompletionRequest) => string) | null = null;
 
+  /** Streams the canned reply word by word so the UI's streaming path gets exercised. */
+  async stream(req: CompletionRequest, onDelta: (text: string) => void): Promise<string> {
+    const full = await this.complete(req);
+    for (const word of full.split(/(?<=\s)/)) {
+      onDelta(word);
+      await new Promise((r) => setTimeout(r, 5));
+    }
+    return full;
+  }
+
   async complete(req: CompletionRequest): Promise<string> {
     this.calls.push(req);
     if (this.reply) return this.reply(req);

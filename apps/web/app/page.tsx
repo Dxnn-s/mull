@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { createProvider } from '@mull/core';
-import { chatReply, type ChatMessage } from '@mull/core/chat';
+import { chatStream, type ChatMessage } from '@mull/core/chat';
 import { GateSession, type SessionResult, type SessionState } from '@mull/core/session';
 import { applyEvent, rememberPass } from '@mull/core/stats';
 import { GateCard } from '@/components/GateCard';
@@ -74,7 +74,12 @@ export default function ChatPage() {
     setDraft('');
     setThinking(true);
     try {
-      const reply = await chatReply(history, createProvider(store.settings));
+      // Show the assistant turn as it streams; the final text replaces the partial.
+      let partial = '';
+      const reply = await chatStream(history, createProvider(store.settings), (delta) => {
+        partial += delta;
+        setMessages([...history, { role: 'assistant', content: partial }]);
+      });
       setMessages([...history, { role: 'assistant', content: reply }]);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));

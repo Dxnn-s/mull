@@ -17,7 +17,8 @@ export {
 } from './stats.ts';
 export { classifierSystemPrompt, classifierUserPrompt, gateSystemPrompt, gateUserPrompt } from './prompts.ts';
 export { extractJson } from './json.ts';
-export { chatReply, CHAT_SYSTEM } from './chat.ts';
+export { chatReply, chatStream, CHAT_SYSTEM } from './chat.ts';
+export { readSse } from './sse.ts';
 export type { ChatMessage } from './chat.ts';
 export { THEME_CSS } from './theme.ts';
 export { PROVIDER_INFO, ANTHROPIC_DEFAULT_MODEL, OPENAI_DEFAULT_MODEL, GEMINI_DEFAULT_MODEL } from './provider-info.ts';
