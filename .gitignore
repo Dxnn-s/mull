@@ -12,3 +12,6 @@ packages/core/eval-results/
 test-results/
 playwright-report/
 dist-test/
+apps/mobile/.expo/
+apps/mobile/ios/
+apps/mobile/android/

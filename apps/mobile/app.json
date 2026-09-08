@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "Mull",
+    "slug": "mull",
+    "scheme": "mull",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0a0a0e"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "school.mull.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0a0a0e"
+      },
+      "package": "school.mull.app"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

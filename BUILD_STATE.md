@@ -4,7 +4,9 @@
 2026-09-08 (session 2). Wave 3 shipped from `Brain/projects/mull/ideas-2026-09-08.md` (the ranked plan: 10 findings, 35 ideas, integrations table, build order). Session 1 (2026-09-06) reached v2.
 
 ## In progress
-- Wave 3 tail: answer-leak guard line (idea 7), local pre-classifier (10), upgrade-path test (8). Written, tests pending.
+- PIVOT 2026-09-08 evening: Dennis wants the app, not the extension ("hard to market and monetize"; "heavy inspo from Opal"). Product = iPhone app that shields the AI apps the user picks (Screen Time API) with a subject quiz as the unlock. Plan: `Brain/projects/mull/app-plan.md`. Design spec DONE: `Brain/projects/mull/design/mobile-spec.md` (483 lines: tokens, orb states, seven screens, nav, shield text, a11y, do-nots).
+- Session A (in progress, after a crash mid-install): `apps/mobile` Expo SDK 57 + expo-router, `.npmrc node-linker=hoisted` for the workspace, metro watches the root. Written: theme provider with all four token sets and Dynamic Type caps, AsyncStorage store (core shapes + session/unlock/saved), quiz wrapper (per-subject concept bank, pickConcept with memory, makeCard via core, gradeCard with review + reshuffle), Orb (halo/core/ring layers, six states, breathe/pulse, reduced motion), UI kit, and routes: (tabs) home/sessions/stats/you, unlock modal (loading/explain/quiz/missed/blocked), subjects, blocked-apps placeholder, paywall layout. Not yet typechecked or run; `pnpm install` was still running.
+- Wave 3 tail landed: answer-leak guard, pre-classifier, upgrade test; plus schedule/recap/consent/health in core (79 vitest). Extension UI for those (dead-key, health probe, first-run, study hours, recap) is PAUSED pending Dennis's call on whether the extension stays as a companion.
 
 ## Next, in the plan's order (see the ideas file for the 4-condition test on each)
 1. **Live pass (idea 2, needs Dennis + a key).** Load `apps/extension/dist` unpacked, send 3 lazy + 2 legit prompts on gemini.google.com first, then chatgpt.com, then claude.ai. Save each real composer subtree as a fixture. Record the 10-second Gemini clip.
