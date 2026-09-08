@@ -121,7 +121,7 @@ test.describe('chatgpt fixture', () => {
     expect(row).toMatchObject({ verdict: 'LAZY', label: 'LEGIT' });
     // The row carries a hash and the concept name, never the prompt.
     expect(row).not.toHaveProperty('prompt');
-    expect(Object.keys(row).sort()).toEqual(['concept', 'hash', 'label', 'ts', 'verdict']);
+    expect(Object.keys(row ?? {}).sort()).toEqual(['concept', 'hash', 'label', 'ts', 'verdict']);
   });
 
   test('cancel keeps the prompt in the composer and counts a walk-away', async ({ context, sw, baseURL }) => {
