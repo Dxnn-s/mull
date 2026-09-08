@@ -29,8 +29,35 @@ async function main() {
   $('hold').textContent = stats.passed + stats.skipped === 0 ? '–' : `${Math.round(hr * 100)}%`;
   $('streak').textContent = String(stats.streak);
   $('sub').textContent = `Today · ${stats.total} prompts all time`;
-  $('sites').textContent = (['chatgpt', 'claude', 'gemini'] as const).filter((s) => settings.sites[s]).join(' · ') || 'no sites on';
+  // "Last prompt seen" per site. Any event proves the intercept fired on that site,
+  // so a site that is on but has not been seen in days is the tell for a broken selector.
+  const now = Date.now();
+  $('sites').innerHTML = (['chatgpt', 'claude', 'gemini'] as const)
+    .map((site) => {
+      const last = [...stats.recent].reverse().find((e) => e.site === site)?.ts;
+      const on = settings.sites[site];
+      let status: string;
+      let color = 'var(--fg-muted)';
+      if (!on) status = 'off';
+      else if (!last) status = 'not seen yet';
+      else {
+        status = ago(now - last);
+        if (now - last > 3 * 86_400_000) color = 'var(--accent)';
+      }
+      return `<li style="display:flex;justify-content:space-between;color:${color}" data-site="${site}"><span>${site}</span><span>${status}</span></li>`;
+    })
+    .join('');
+  $('version').textContent = chrome.runtime.getManifest().version;
   $('settings').addEventListener('click', () => chrome.runtime.openOptionsPage());
+}
+
+function ago(ms: number): string {
+  const m = Math.floor(ms / 60_000);
+  if (m < 1) return 'just now';
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 48) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
 }
 
 void main();

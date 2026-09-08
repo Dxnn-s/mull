@@ -35,8 +35,12 @@
     <div class="tile"><div class="k">hold rate</div><div class="v data" id="hold">–</div></div>
     <div class="tile"><div class="k">streak</div><div class="v" id="streak">0</div></div>
   </div>
+  <div class="tile" style="margin-bottom:12px">
+    <div class="k">sites · last prompt seen</div>
+    <ul id="sites" style="list-style:none;margin:6px 0 0;padding:0;display:grid;gap:3px;font-family:var(--mono);font-size:11.5px"></ul>
+  </div>
   <div class="row">
-    <span id="sites"></span>
+    <span class="mono" style="font-size:10.5px;color:var(--fg-muted)">v<span id="version"></span></span>
     <button id="settings">Settings</button>
   </div>
   <div class="foot">no telemetry · keys never leave this device</div>

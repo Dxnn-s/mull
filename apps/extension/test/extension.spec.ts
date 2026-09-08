@@ -204,6 +204,8 @@ test.describe('v1 behaviors', () => {
     await expect(popup.locator('#gated')).toHaveText('1');
     await expect(popup.locator('#streak')).toHaveText('1');
     await expect(popup.locator('#hold')).toHaveText('100%');
+    await expect(popup.locator('#sites li[data-site="chatgpt"]')).toContainText('just now');
+    await expect(popup.locator('#sites li[data-site="claude"]')).toContainText('not seen yet');
   });
 });
 
