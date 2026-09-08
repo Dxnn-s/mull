@@ -72,8 +72,8 @@ export default function Sessions() {
       </Card>
 
       <Card style={{ marginTop: SPACE.md, gap: SPACE.lg }}>
-        <Row label="Exam week" right={<Switch value={!!examOn} onValueChange={(v) => setHm({ enabled: v ? true : hm.enabled, schedule: v ? EXAM_WEEK : null })} trackColor={{ true: c.accent, false: c.surface2 }} thumbColor="#ececf1" />} />
-        <Row label="Hard mode" right={<Switch value={hm.enabled} onValueChange={(v) => setHm({ enabled: v })} trackColor={{ true: c.accent, false: c.surface2 }} thumbColor="#ececf1" />} />
+        <Row label="Exam week" right={<Toggle value={!!examOn} onChange={(v) => setHm({ enabled: v ? true : hm.enabled, schedule: v ? EXAM_WEEK : null })} />} />
+        <Row label="Hard mode" right={<Toggle value={hm.enabled} onChange={(v) => setHm({ enabled: v })} />} />
         <Row
           label="Block after"
           right={
@@ -93,6 +93,13 @@ export default function Sessions() {
       </T>
     </ScrollView>
   );
+}
+
+/** Accent track, pale thumb, on every platform. react-native-web needs activeThumbColor or it paints its own teal. */
+function Toggle({ value, onChange }: { value: boolean; onChange(v: boolean): void }) {
+  const { c } = useTheme();
+  const webOnly = { activeThumbColor: '#ececf1' } as object;
+  return <Switch value={value} onValueChange={onChange} trackColor={{ true: c.accent, false: c.surface2 }} thumbColor="#ececf1" ios_backgroundColor={c.surface2} {...webOnly} />;
 }
 
 function Row({ label, right }: { label: string; right: React.ReactNode }) {

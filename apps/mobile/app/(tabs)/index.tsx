@@ -7,7 +7,7 @@ import { holdRate } from '@mull/core/stats';
 import { Orb, type OrbState } from '@/orb';
 import { useStore } from '@/store';
 import { SPACE, useTheme } from '@/theme';
-import { PrimaryButton, StatTile, T } from '@/ui';
+import { PrimaryButton, SecondaryButton, StatTile, T } from '@/ui';
 import { formatClock, formatSaved } from '@/quiz';
 
 export default function Home() {
@@ -94,8 +94,8 @@ export default function Home() {
       <View style={{ marginTop: SPACE.xxl, gap: SPACE.md }}>
         {session ? (
           <>
-            {!unlocked && <PrimaryButton label="Pass a card, unlock 15 min" onPress={() => router.push('/unlock')} />}
-            <PrimaryButton label="End session" onPress={end} style={unlocked ? undefined : { backgroundColor: c.surface2, shadowOpacity: 0 }} />
+            {!unlocked && <PrimaryButton label={`Pass a card, unlock ${state.unlockMinutes} min`} onPress={() => router.push('/unlock')} />}
+            {unlocked ? <PrimaryButton label="End session" onPress={end} /> : <SecondaryButton label="End session" onPress={end} />}
           </>
         ) : (
           <PrimaryButton label="Start session" onPress={() => start(25)} />
