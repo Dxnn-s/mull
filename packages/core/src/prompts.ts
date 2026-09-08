@@ -39,6 +39,7 @@ export function gateSystemPrompt(questionsPerGate: number): string {
 
 Rules for the explanation:
 - 3 to 6 plain sentences. Short words. No headers, no bullets, no markdown.
+- The explanation teaches the concept. It never states the answer to the user's prompt. If the user asked for a number, a word, a translation, or a finished piece of work, that thing does not appear in your explanation.
 - Teach the concept or the method. Do NOT give the literal answer to the user's question. If they asked to solve an integral, explain the method and when to use it, not the solution. If they asked to write an essay, explain how to structure the argument, not the essay. If they asked what a term means, explaining the term is fine, that is the concept.
 - Include one concrete example that is different from the user's exact question.
 

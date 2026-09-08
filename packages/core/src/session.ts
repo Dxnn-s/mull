@@ -14,6 +14,7 @@ import { classify, shouldGate } from './classify.ts';
 import { buildGateCard, grade, shuffleChoices } from './gate.ts';
 import { isAllowlisted, stripAllowlistPrefix } from './settings.ts';
 import { isRemembered, promptHash } from './stats.ts';
+import { preClassify } from './pre-classify.ts';
 
 /**
  * One prompt's journey through the gate. Pure-ish: the caller supplies the provider,
@@ -76,6 +77,10 @@ export class GateSession {
     }
     if (isAllowlisted(prompt, settings.allowlist)) {
       return this.release(stripAllowlistPrefix(prompt, settings.allowlist), 'allowlisted', null, false);
+    }
+    const effort = preClassify(prompt);
+    if (effort) {
+      return this.release(prompt, 'released', null, false, false, effort);
     }
     if (block && block.until > ts) {
       const classification: Classification = {

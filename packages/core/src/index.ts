@@ -20,6 +20,7 @@ export {
 } from './stats.ts';
 export { classifierSystemPrompt, classifierUserPrompt, gateSystemPrompt, gateUserPrompt } from './prompts.ts';
 export { extractJson } from './json.ts';
+export { preClassify } from './pre-classify.ts';
 export { chatReply, chatStream, CHAT_SYSTEM } from './chat.ts';
 export { readSse } from './sse.ts';
 export type { ChatMessage } from './chat.ts';

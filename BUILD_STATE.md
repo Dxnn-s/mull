@@ -1,38 +1,46 @@
 # Loop state · mull-build
 
 ## Last run
-2026-09-06 (session 1, one sitting). v0 -> v1 -> v2 reached. Loop stopped per VISION stop condition. Next run resumes from "Open follow-ups".
+2026-09-08 (session 2). Wave 3 shipped from `Brain/projects/mull/ideas-2026-09-08.md` (the ranked plan: 10 findings, 35 ideas, integrations table, build order). Session 1 (2026-09-06) reached v2.
 
 ## In progress
-- (nothing; v2 reached)
+- Wave 3 tail: answer-leak guard line (idea 7), local pre-classifier (10), upgrade-path test (8). Written, tests pending.
 
-## Open follow-ups (not in v2 scope, ranked)
-1. Real-site selector check: load dist/ unpacked and try chatgpt.com, claude.ai, gemini with a real key. Fixtures mimic the composers; the live DOMs will drift.
-2. Streaming chat replies in the web app (v0 chat is one completion, no stream).
-3. "Last gate seen" indicator in the popup so a silently broken selector is visible.
-4. Eval on Dennis's corrected labels once he edits the seed file; rerun `MULL_EVAL_PROVIDER=claude-cli pnpm eval` and update the prompt rules.
-5. Gemini sign-in research + Anthropic third-party app developer path (open loop in Brain).
+## Next, in the plan's order (see the ideas file for the 4-condition test on each)
+1. **Live pass (idea 2, needs Dennis + a key).** Load `apps/extension/dist` unpacked, send 3 lazy + 2 legit prompts on gemini.google.com first, then chatgpt.com, then claude.ai. Save each real composer subtree as a fixture. Record the 10-second Gemini clip.
+2. Idea 15 dead-key handling (S), 9 selector health probe (S), 13 first-run chips + consent (S, after 8), 12 study hours (S), 14 Monday recap text (S).
+3. Idea 18 Chrome Web Store unlisted paperwork (M): developer account under a parent ($5), `apps/extension/store/` copy, hosted privacy policy. Longest pole, start in parallel.
+4. Idea 20 user-zero week with the stop rule (hold rate under 40% or Mull turned off twice = fix the card before any distribution idea).
+5. Then 11 spaced ladder, 17 classifier fix loop, 19 measurement, 16 demo front door, 22 landing page, 26 vault export spine + 27 brief line.
 
 ## Completed
-- 2026-09-06 core: types, prompts, classify/shouldGate, gate card + grading + shuffle, GateSession state machine, stats reducer + concept memory, allowlist, providers (anthropic SDK / openai / gemini / mock), 35 vitest green, typecheck clean.
-- 2026-09-06 eval harness: seed-table parser, confusion matrix, per-label gating numbers; mock baseline 53% exact (keyword rules, expected).
-- 2026-09-06 v2 DONE. Icons (Playwright-rendered PNG), zip packager (78 KB, 11 files), README, SECURITY notes, /about landing copy, seven-day stats table, font-variable fix (html-level next/font classes), screenshot scripts for both surfaces, all four palette/theme combos checked by eye. Extension 11 Playwright green, web 4 green, core 44 vitest green, both production builds clean.
-- 2026-09-06 v1 DONE. Provider adapter request-shape tests, gemini fixture, concept-memory / hard-mode / popup tests, release-bypass race fixed. Eval on Haiku (local CLI), normal strictness, after prompt fix: exact 42/55 (76%), LEGIT wrongly gated 0/21, LAZY gated 16/22 (73%). Before fix: 41/55, 1/21, 18/22.
-- 2026-09-06 v0 DONE. web app shell: Next 16 chat + inline gate card + settings + stats, localStorage only, mock provider demo mode; 4 Playwright tests green (gate+answer, legit passthrough, stats reflect pass, palette persists). `next build` clean, 4 static routes.
-- 2026-09-06 extension: MV3 (esbuild), background SW owns provider calls, content script capture-phase intercept on Enter + send click, shadow-DOM overlay (classifying / explain / quiz / blocked / error), popup, options. 7 Playwright tests green on chatgpt + claude fixtures (gate, wrong answers bounce, legit passthrough, allowlist strip, skip counted, disabled passthrough, click-release).
+- 2026-09-08 wave 3 (commit "wave 3: ..."): answer key after a miss with reshuffle; timeouts on every provider path + bridge, send-anyway pill link and double-Enter; cheap defaults (gpt-5-nano / gemini-2.5-flash-lite / claude-haiku-4-5) with per-model parameter branching, cost + age lines; cancelled outcome + time-in-card + median tile + walked-away column; "This was real work" with hashed correction rows exportable from both settings pages; sites.ts rewritten from 2026 recon, click-first release with enable wait. core 64 vitest, extension 14 Playwright, web 6 Playwright. Extension 0.1.0.
+- 2026-09-08 follow-ups from session 1: streaming chat replies on every provider (b2128ab); per-site "last prompt seen" in the popup (bf6ef7e).
+- 2026-09-08 research + plan: `ideas-2026-09-08.md` via a 12-agent workflow (six research lanes, three idea angles, two judges, one synthesizer). Key findings: ChatGPT textarea fallbacks were an un-gate bug; no provider sign-in is open to indie apps (OpenRouter PKCE is the only one-click path); Opus default cost 50x too much and a naive swap to Haiku would 400; Gemini is the school-issued surface and Claude is 18+; the retry loop taught the lure (no feedback, same order); no timeout anywhere was the one way Mull could trap a user.
+- 2026-09-06 v2 DONE. Icons (Playwright-rendered PNG), zip packager, README, SECURITY notes, /about landing copy, seven-day stats table, font-variable fix (html-level next/font classes), screenshot scripts for both surfaces, all four palette/theme combos checked by eye.
+- 2026-09-06 v1 DONE. Provider adapter request-shape tests, gemini fixture, concept-memory / hard-mode / popup tests, release-bypass race fixed. Eval on Haiku (local CLI), normal strictness, after prompt fix: exact 42/55 (76%), LEGIT wrongly gated 0/21, LAZY gated 16/22 (73%).
+- 2026-09-06 v0 DONE. Core engine + tests, MV3 extension on fixture composers, Next 16 web shell.
 
 ## Escalated to Dennis
-- Buy mull.school (deferred by Dennis 2026-09-06).
-- Correct labels in `Brain/projects/mull/data/prompt-labels-seed.md` (classifier spec).
+- The live pass on the three real sites (item 1 above). Fixtures cannot prove the selectors; the session-2 rewrite is from published recon, not from a logged-in page.
+- Buy mull.school (deferred 2026-09-06).
+- Correct labels in `Brain/projects/mull/data/prompt-labels-seed.md`; the "This was real work" export now produces candidate rows too.
+- Chrome Web Store developer account must be held by an adult and its email can never change (idea 18).
+
+## Not doing (from the plan)
+Sign in with Claude, Codex/ChatGPT OAuth, Google sign-in, a Mull-hosted tier (held), fetch-level blocking, Safari, native iOS, district channel, Socratic chat drift, confidence sliders, MutationObserver on body, auto-importing subjects, extra permissions.
 
 ## Lessons learned (write here, not in chat)
-- Import core by subpath (`@mull/core/session`, `/stats`, `/provider-info`) from anything that is not the service worker. The index re-exports the Anthropic SDK and esbuild cannot tree-shake it: options.js went 3.0 MB -> 34 KB.
+- A fixture written from the selector file proves the selectors match the fixture, not the site. Save real composer subtrees as fixtures.
+- Test assertions like "no prompt text in the row" must not grep for words that legitimately appear in the concept name. Assert the key set instead.
+- Haiku 4.5 rejects `output_config.effort` and adaptive thinking. Any model default change on Anthropic needs the params branch or it 400s.
+- Import core by subpath from anything that is not the service worker; the index re-exports the Anthropic SDK and esbuild cannot tree-shake it (options.js 3.0 MB -> 34 KB).
 - node `--experimental-strip-types` rejects TS parameter properties; use `--experimental-transform-types` for the eval runner.
-- next/font variables must sit on <html> if any :root rule references them; on <body> the :root var chain resolves to nothing and every font silently falls back to Times. Screenshot pass caught it, typecheck and tests did not.
-- Next 16 dev blocks /_next chunks for origins not in `allowedDevOrigins`; a Playwright baseURL of 127.0.0.1 silently renders SSR-only pages (nav shows, client pages stay empty, no console error). Add 127.0.0.1 + localhost.
-- Playwright `addInitScript` re-runs on every navigation; seed localStorage once via page.evaluate after a first goto or reloads wipe what the test just saved.
+- next/font variables must sit on <html> if any :root rule references them, or every font silently falls back to Times. Only a screenshot pass catches it.
+- Next 16 dev blocks /_next chunks for origins not in `allowedDevOrigins`; a Playwright baseURL of 127.0.0.1 renders SSR-only pages with no console error.
+- Playwright `addInitScript` re-runs on every navigation; seed localStorage once via page.evaluate.
 - The claude CLI in -p mode keeps its own agent system prompt and ignores --system-prompt-file; fold instructions into the stdin prompt for eval use.
-- Playwright + MV3: launchPersistentContext with --load-extension, then `context.serviceWorkers()[0]` to seed chrome.storage. Fixtures declare the site on `<html data-mull-site>` so the content script matches 127.0.0.1 under the --test manifest.
+- Playwright + MV3: launchPersistentContext with --load-extension, `context.serviceWorkers()[0]` to seed chrome.storage, `<html data-mull-site>` on fixtures.
 
 ## Stop conditions
-- v2 checklist in VISION.md fully green, or Dennis says stop.
+- Dennis says stop, or the plan's session-2 list is exhausted and the live pass is the only item left (it needs him).
