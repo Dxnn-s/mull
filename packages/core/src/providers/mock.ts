@@ -12,7 +12,11 @@ export class MockProvider implements Provider {
   /** Optional override so a test can force a reply. */
   reply: ((req: CompletionRequest) => string) | null = null;
 
-  constructor(private readonly delayMs = 0) {}
+  constructor(
+    private readonly delayMs = 0,
+    /** Model "broken" in settings: every call throws, to exercise dead-key handling. */
+    private readonly broken = false,
+  ) {}
 
   /** Streams the canned reply word by word so the UI's streaming path gets exercised. */
   async stream(req: CompletionRequest, onDelta: (text: string) => void): Promise<string> {
@@ -26,6 +30,7 @@ export class MockProvider implements Provider {
 
   async complete(req: CompletionRequest): Promise<string> {
     this.calls.push(req);
+    if (this.broken) throw new Error('mock provider: 401 bad key');
     if (this.delayMs > 0) {
       await new Promise<void>((resolve, reject) => {
         const t = setTimeout(resolve, this.delayMs);

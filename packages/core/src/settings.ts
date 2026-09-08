@@ -10,7 +10,7 @@ export const DEFAULT_SETTINGS: Settings = {
   allowlist: ['work:', 'skip:'],
   sites: { chatgpt: true, claude: true, gemini: true },
   questionsPerGate: 2,
-  hardMode: { enabled: false, blockMinutes: 10, failsBeforeBlock: 2 },
+  hardMode: { enabled: false, blockMinutes: 10, failsBeforeBlock: 2, schedule: null },
   conceptMemoryDays: 7,
   palette: 'amber',
   theme: 'dark',

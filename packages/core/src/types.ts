@@ -69,7 +69,15 @@ export interface Settings {
   allowlist: string[];
   sites: { chatgpt: boolean; claude: boolean; gemini: boolean };
   questionsPerGate: 1 | 2 | 3;
-  hardMode: { enabled: boolean; blockMinutes: number; failsBeforeBlock: number };
+  hardMode: {
+    enabled: boolean;
+    blockMinutes: number;
+    failsBeforeBlock: number;
+    /** Study hours. Null = whenever enabled. See schedule.ts. */
+    schedule?: { days: number[]; start: string; end: string } | null;
+  };
+  /** When the user agreed to the disclosure. Absent on installs that predate it (see consent.ts). */
+  consentedAt?: number;
   /** Days a passed concept stays unlocked. 0 disables concept memory. */
   conceptMemoryDays: number;
   palette: 'amber' | 'sage';
@@ -129,4 +137,29 @@ export interface Stats {
 
 export interface BlockState {
   until: number;
+}
+
+/** Per-site selector probe result, written by the content script at page load. */
+export interface SiteHealth {
+  ts: number;
+  composerFound: boolean;
+  sendFound: boolean;
+  /** Index of the selector that matched, so a dead primary is visible before the fallbacks die too. */
+  composerIndex: number;
+  sendIndex: number;
+}
+
+export interface Health {
+  sites: Partial<Record<string, SiteHealth>>;
+  /** Consecutive provider failures. At DEAD_KEY_FAILURES the gate stands down until a success or a settings save. */
+  keyFailures: number;
+  lastError?: string;
+}
+
+export const DEAD_KEY_FAILURES = 3;
+
+export const EMPTY_HEALTH: Health = { sites: {}, keyFailures: 0 };
+
+export function normalizeHealth(h: Partial<Health> | null | undefined): Health {
+  return { ...EMPTY_HEALTH, ...(h ?? {}), sites: (h?.sites as Health['sites']) ?? {} };
 }

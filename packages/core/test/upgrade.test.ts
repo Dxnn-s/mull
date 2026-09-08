@@ -52,7 +52,8 @@ describe('upgrade path from v2 storage', () => {
     expect(s.enabled).toBe(true);
     expect(s.apiKey).toBe('sk-ant-v2');
     expect(s.subjects).toEqual(['calculus']);
-    expect(s.hardMode).toEqual({ enabled: false, blockMinutes: 10, failsBeforeBlock: 2 });
+    expect(s.hardMode).toMatchObject({ enabled: false, blockMinutes: 10, failsBeforeBlock: 2 });
+    expect(s.hardMode.schedule).toBeNull();
   });
 
   it('stats normalize with the new counters and arrays present', () => {

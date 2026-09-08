@@ -21,6 +21,10 @@ export {
 export { classifierSystemPrompt, classifierUserPrompt, gateSystemPrompt, gateUserPrompt } from './prompts.ts';
 export { extractJson } from './json.ts';
 export { preClassify } from './pre-classify.ts';
+export { isHardModeNow, hardModeUntil, EXAM_WEEK, SCHOOL_NIGHTS } from './schedule.ts';
+export type { HardSchedule } from './schedule.ts';
+export { buildRecap, weekStart } from './recap.ts';
+export { needsConsent, CONSENT_TEXT, SUBJECT_CHIPS } from './consent.ts';
 export { chatReply, chatStream, CHAT_SYSTEM } from './chat.ts';
 export { readSse } from './sse.ts';
 export type { ChatMessage } from './chat.ts';
@@ -52,6 +56,6 @@ export function createProvider(settings: Pick<Settings, 'provider' | 'apiKey' | 
     case 'gemini':
       return new GeminiProvider(settings.apiKey.trim(), model, fetchImpl);
     case 'mock':
-      return new MockProvider(settings.model === 'slow' ? 20_000 : 0);
+      return new MockProvider(settings.model === 'slow' ? 20_000 : 0, settings.model === 'broken');
   }
 }
