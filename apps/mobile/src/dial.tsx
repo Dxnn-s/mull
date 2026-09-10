@@ -1,6 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, Easing, useWindowDimensions, View } from 'react-native';
 import Svg, { Circle, G, Line } from 'react-native-svg';
+import type { Seal } from './guilloche';
+import { Rosette } from './rosette';
 import { SPACE, useTheme } from './theme';
 import { T } from './ui';
 
@@ -8,30 +10,29 @@ export type DialState = 'resting' | 'active' | 'shielded' | 'unlocked' | 'hard' 
 
 export interface DialProps {
   state: DialState;
-  /** 0..1 of the ring that is filled. */
+  /** 0..1 of the bezel that is filled. */
   progress: number;
   label: string;
   value: string;
   a11y: string;
+  /** Drives the engraving. Same record always draws the same figure. */
+  seal: Seal;
 }
 
 const TICKS = 60;
 const AnimatedLine = Animated.createAnimatedComponent(Line);
 
 /**
- * A bezel, not an orb. Sixty tick marks around a circle; elapsed ones are ink,
- * the rest are faint. Every fifth tick is longer, which is what makes it read as
- * an instrument instead of a progress ring. No fill, no gradient, no glow.
- *
- * State reads through the marks: hard mode drops the long-tick rhythm and adds
- * an inner rule (tighter, more clinical), unlocked draws the filled arc in accent
- * with an inner rule, milestone adds an outer hairline.
+ * A bezel around a seal, not an orb. The outer ring is sixty tick marks, elapsed
+ * in ink and the rest faint, every fifth longer, which is what makes it read as
+ * an instrument. Inside sits the guilloché, which carries the record. The middle
+ * stays clear paper so the numerals have somewhere quiet to sit.
  */
-export function Dial({ state, progress, label, value, a11y }: DialProps) {
+export function Dial({ state, progress, label, value, a11y, seal }: DialProps) {
   const { c, reduceMotion } = useTheme();
   const { width } = useWindowDimensions();
 
-  const size = Math.min(Math.round(width * 0.70), 300);
+  const size = Math.min(Math.round(width * 0.74), 320);
   const box = size;
   const cx = box / 2;
   const cy = box / 2;
@@ -40,6 +41,9 @@ export function Dial({ state, progress, label, value, a11y }: DialProps) {
   const uniform = state === 'hard';
   const filled = Math.round(Math.max(0, Math.min(1, progress)) * TICKS);
   const inkTick = state === 'unlocked' ? c.accent : state === 'resting' ? c.fgMuted : c.fg;
+
+  const engraving = state === 'unlocked' || state === 'milestone' ? c.accent : c.fg;
+  const engravingOpacity = state === 'resting' ? 0.28 : state === 'hard' ? 0.32 : 0.45;
 
   // One earned motion: the marks sweep on when the dial changes state.
   const sweep = useRef(new Animated.Value(1)).current;
@@ -59,15 +63,32 @@ export function Dial({ state, progress, label, value, a11y }: DialProps) {
     const len = uniform ? 9 : major ? 15 : 9;
     const on = i < filled;
     const angle = (i / TICKS) * 2 * Math.PI - Math.PI / 2;
-    const x1 = cx + Math.cos(angle) * (outer - len);
-    const y1 = cy + Math.sin(angle) * (outer - len);
-    const x2 = cx + Math.cos(angle) * outer;
-    const y2 = cy + Math.sin(angle) * outer;
-    return { i, x1, y1, x2, y2, on, major, w: major ? 2 : 1.25 };
+    return {
+      i,
+      x1: cx + Math.cos(angle) * (outer - len),
+      y1: cy + Math.sin(angle) * (outer - len),
+      x2: cx + Math.cos(angle) * outer,
+      y2: cy + Math.sin(angle) * outer,
+      on,
+      w: major ? 2 : 1.25,
+    };
   });
 
   return (
     <View accessible accessibilityLabel={a11y} style={{ width: box, height: box, alignSelf: 'center', alignItems: 'center', justifyContent: 'center' }}>
+      <Rosette
+        size={box}
+        innerRatio={0.4}
+        outerRatio={0.86}
+        seal={seal}
+        stroke={engraving}
+        strokeWidth={0.6}
+        opacity={engravingOpacity}
+        driftPerMinute={state === 'active' || state === 'unlocked' ? 6 : 0}
+        reduceMotion={reduceMotion}
+        austere={state === 'hard'}
+      />
+
       <Svg width={box} height={box} style={{ position: 'absolute' }}>
         <G>
           {marks.map((m) => (
@@ -84,11 +105,11 @@ export function Dial({ state, progress, label, value, a11y }: DialProps) {
             />
           ))}
         </G>
-        {(state === 'hard' || state === 'unlocked') && <Circle cx={cx} cy={cy} r={outer - 24} stroke={c.border} strokeWidth={1} fill="none" />}
+        {(state === 'hard' || state === 'unlocked') && <Circle cx={cx} cy={cy} r={outer - 20} stroke={c.border} strokeWidth={1} fill="none" />}
         {state === 'milestone' && <Circle cx={cx} cy={cy} r={outer - 1} stroke={c.accentBorder} strokeWidth={1} fill="none" />}
       </Svg>
 
-      <View style={{ alignItems: 'center', gap: SPACE.xs }}>
+      <View style={{ alignItems: 'center', gap: SPACE.xs, backgroundColor: c.bg, paddingHorizontal: SPACE.md, paddingVertical: SPACE.sm, borderRadius: 999 }}>
         {label ? (
           <T v="label" color={c.fgMuted}>
             {label}

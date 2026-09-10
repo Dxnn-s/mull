@@ -4,6 +4,7 @@ import * as Clipboard from 'expo-clipboard';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { listConcepts, medianCardMs } from '@mull/core/stats';
 import { buildRecap, weekStart } from '@mull/core/recap';
+import { Rosette } from '@/rosette';
 import { useStore } from '@/store';
 import { GUTTER, SPACE, useTheme } from '@/theme';
 import { FigureRow, Rule, T } from '@/ui';
@@ -32,9 +33,14 @@ export default function Record() {
 
   return (
     <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingTop: insets.top + SPACE.lg, paddingHorizontal: GUTTER, paddingBottom: SPACE.s40 }}>
-      <T v="display">Record.</T>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <T v="display">Record.</T>
+        <View style={{ width: 84, height: 84, marginTop: -SPACE.sm, alignItems: 'center', justifyContent: 'center' }} pointerEvents="none">
+          <Rosette size={84} innerRatio={0.28} outerRatio={0.92} seal={{ concepts: concepts.length, streak: stats.bestStreak }} stroke={c.fg} strokeWidth={0.5} opacity={0.34} />
+        </View>
+      </View>
 
-      <T v="numeralLg" style={{ marginTop: SPACE.s32 }}>
+      <T v="numeralLg" style={{ marginTop: SPACE.xl }}>
         {formatSaved(state.savedSeconds)}
       </T>
       <T v="label" color={c.fgMuted} style={{ marginTop: SPACE.xs }}>

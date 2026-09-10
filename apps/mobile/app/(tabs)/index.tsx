@@ -3,7 +3,7 @@ import { Pressable, ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { hardModeUntil, isHardModeNow } from '@mull/core/schedule';
-import { holdRate } from '@mull/core/stats';
+import { holdRate, listConcepts } from '@mull/core/stats';
 import { Dial, type DialState } from '@/dial';
 import { useStore } from '@/store';
 import { GUTTER, SPACE, useTheme } from '@/theme';
@@ -76,7 +76,14 @@ export default function Today() {
       </T>
 
       <View style={{ marginTop: SPACE.s32, marginBottom: SPACE.s32 }}>
-        <Dial state={dial} progress={progress} label={label} value={value} a11y={session ? `Session active, ${value} left.` : hard ? `Hard mode, ${until}.` : 'No session.'} />
+        <Dial
+          state={dial}
+          progress={progress}
+          label={label}
+          value={value}
+          seal={{ concepts: listConcepts(state.memory).length, streak: state.stats.streak }}
+          a11y={session ? `Session active, ${value} left.` : hard ? `Hard mode, ${until}.` : 'No session.'}
+        />
       </View>
 
       <T v="numeralLg" color={c.fg}>
