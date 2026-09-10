@@ -8,8 +8,8 @@ import { applyEvent, rememberPass } from '@mull/core/stats';
 import type { GateCard, ReviewItem } from '@mull/core/types';
 import { gradeCard, makeCard, pickConcept, formatClock } from '@/quiz';
 import { useStore } from '@/store';
-import { RADIUS, SPACE, useTheme } from '@/theme';
-import { Card, Eyebrow, PrimaryButton, SecondaryButton, T, TextButton } from '@/ui';
+import { GUTTER, RADIUS, SPACE, useTheme } from '@/theme';
+import { PrimaryButton, Rule, SecondaryButton, T, TextButton } from '@/ui';
 
 type Phase =
   | { kind: 'loading'; subject: string; concept: string }
@@ -19,8 +19,8 @@ type Phase =
   | { kind: 'error'; message: string };
 
 /**
- * The gate. One card, four states, no way out except Cancel (and not even that
- * in hard mode). A pass opens the shield for unlockMinutes.
+ * The gate. One card, four states, no way out except Cancel, and not even that
+ * in hard mode. A pass opens the shield for unlockMinutes.
  */
 export default function Unlock() {
   const { state, update } = useStore();
@@ -95,29 +95,33 @@ export default function Unlock() {
     router.back();
   }
 
-  const pad = { paddingTop: insets.top + SPACE.lg, paddingHorizontal: SPACE.xl, paddingBottom: insets.bottom + SPACE.s32 };
+  const pad = { paddingTop: insets.top + SPACE.xl, paddingHorizontal: GUTTER, paddingBottom: insets.bottom + SPACE.s32 };
 
   if (!phase || phase.kind === 'loading') {
     return (
-      <View style={[{ flex: 1, backgroundColor: c.bg }, pad]}>
-        <Eyebrow>mull · unlock</Eyebrow>
-        <T v="title" style={{ marginTop: SPACE.lg }}>
-          {phase ? phase.concept : ''}
+      <View style={[{ flex: 1 }, pad]}>
+        <T v="label" color={c.accent}>
+          mull · unlock
+        </T>
+        <T v="title" style={{ marginTop: SPACE.xl }}>
+          {phase ? `${phase.concept}.` : ''}
         </T>
         <T v="bodySm" color={c.fgMuted} style={{ marginTop: SPACE.sm }}>
-          writing a 40-second lesson
+          Writing a forty-second lesson.
         </T>
-        <TextButton label="Cancel" onPress={cancel} style={{ marginTop: SPACE.s40 }} />
+        <TextButton label="Cancel" onPress={cancel} align="left" style={{ marginTop: SPACE.s40 }} />
       </View>
     );
   }
 
   if (phase.kind === 'error') {
     return (
-      <View style={[{ flex: 1, backgroundColor: c.bg }, pad]}>
-        <Eyebrow color={c.danger}>mull · couldn't load</Eyebrow>
-        <T v="title" style={{ marginTop: SPACE.lg }}>
-          No card.
+      <View style={[{ flex: 1 }, pad]}>
+        <T v="label" color={c.danger}>
+          mull · no card
+        </T>
+        <T v="title" style={{ marginTop: SPACE.xl }}>
+          Nothing to ask you.
         </T>
         <T v="body" color={c.fgMuted} style={{ marginTop: SPACE.sm }}>
           {phase.message}
@@ -127,33 +131,39 @@ export default function Unlock() {
     );
   }
 
-  if (phase.kind === 'blocked') {
-    return <Blocked until={phase.until} review={phase.review} onClose={() => router.back()} />;
-  }
+  if (phase.kind === 'blocked') return <Blocked until={phase.until} review={phase.review} onClose={() => router.back()} />;
 
   if (phase.kind === 'explain') {
+    const missed = phase.review.length > 0;
     return (
-      <ScrollView style={{ flex: 1, backgroundColor: c.bg }} contentContainerStyle={pad}>
-        <Eyebrow color={phase.review.length ? c.danger : undefined}>{phase.review.length ? 'mull · missed' : 'mull · unlock'}</Eyebrow>
-        <T v="title" style={{ marginTop: SPACE.lg }}>
-          {phase.review.length ? 'Not that one.' : `${phase.card.concept}.`}
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={pad}>
+        <T v="label" color={missed ? c.danger : c.accent}>
+          {missed ? 'mull · missed' : 'mull · unlock'}
         </T>
-        <T v="label" color={c.fgMuted} style={{ marginTop: SPACE.xs }}>
+        <T v="title" style={{ marginTop: SPACE.xl }}>
+          {missed ? 'Not that one.' : `${phase.card.concept}.`}
+        </T>
+        <T v="label" color={c.fgMuted} style={{ marginTop: SPACE.sm }}>
           {phase.subject}
         </T>
-        {phase.review.length > 0 && <AnswerKey items={phase.review} />}
-        <T v="body" style={{ marginTop: SPACE.xl }}>
+
+        {missed && <AnswerKey items={phase.review} />}
+
+        <T v="body" style={{ marginTop: SPACE.xxl }}>
           {phase.card.explanation}
         </T>
-        <PrimaryButton label={phase.review.length ? 'New question' : 'I read it, quiz me'} onPress={() => setPhase({ kind: 'quiz', card: phase.card, subject: phase.subject, attempts: phase.attempts })} style={{ marginTop: SPACE.s32 }} />
+
+        <PrimaryButton label={missed ? 'Try a new question' : 'I read it, quiz me'} onPress={() => setPhase({ kind: 'quiz', card: phase.card, subject: phase.subject, attempts: phase.attempts })} style={{ marginTop: SPACE.s32 }} />
         {hard ? (
-          <T v="bodySm" color={c.fgMuted} style={{ marginTop: SPACE.md, textAlign: 'center' }}>
+          <T v="bodySm" color={c.fgMuted} style={{ marginTop: SPACE.lg, textAlign: 'center' }}>
             {`${Math.max(0, state.settings.hardMode.failsBeforeBlock - phase.attempts)} misses left tonight.`}
           </T>
         ) : (
-          <TextButton label="Skip (counts against you)" onPress={skip} />
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: SPACE.xs }}>
+            <TextButton label="Skip, counts against you" onPress={skip} align="left" />
+            <TextButton label="Cancel" onPress={cancel} align="right" />
+          </View>
         )}
-        {!hard && <TextButton label="Cancel" onPress={cancel} style={{ alignItems: 'flex-end' }} />}
       </ScrollView>
     );
   }
@@ -161,17 +171,21 @@ export default function Unlock() {
   const q = phase.card.questions[qi]!;
   const last = qi === phase.card.questions.length - 1;
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: c.bg }} contentContainerStyle={pad}>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-        <Eyebrow>mull · unlock</Eyebrow>
+    <ScrollView style={{ flex: 1 }} contentContainerStyle={pad}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
+        <T v="label" color={c.accent}>
+          mull · unlock
+        </T>
         <T v="label" color={c.fgMuted}>
           {`${qi + 1} of ${phase.card.questions.length}`}
         </T>
       </View>
-      <T v="body" style={{ marginTop: SPACE.xl, fontSize: 18, lineHeight: 26 }}>
+
+      <T v="body" style={{ marginTop: SPACE.xl, fontSize: 19, lineHeight: 28 }}>
         {q.q}
       </T>
-      <View style={{ marginTop: SPACE.lg, gap: SPACE.sm }}>
+
+      <View style={{ marginTop: SPACE.xl, borderTopWidth: 1, borderTopColor: c.border }}>
         {q.choices.map((choice, j) => {
           const selected = answers[qi] === j;
           return (
@@ -180,9 +194,9 @@ export default function Unlock() {
               accessibilityRole="radio"
               accessibilityState={{ checked: selected }}
               onPress={() => setAnswers((a) => a.map((v, k) => (k === qi ? j : v)))}
-              style={{ minHeight: 56, borderRadius: RADIUS.card, paddingHorizontal: SPACE.lg, paddingVertical: SPACE.md, flexDirection: 'row', gap: SPACE.md, alignItems: 'center', backgroundColor: selected ? c.accentSoft : c.surface, borderWidth: 1, borderColor: selected ? c.accentBorder : c.border }}
+              style={{ minHeight: 58, paddingVertical: SPACE.md, paddingHorizontal: selected ? SPACE.md : 0, borderBottomWidth: 1, borderBottomColor: c.border, flexDirection: 'row', gap: SPACE.md, alignItems: 'center', backgroundColor: selected ? c.accentSoft : 'transparent', borderRadius: selected ? RADIUS.card : 0 }}
             >
-              <T v="label" color={selected ? c.accent : c.fgMuted}>
+              <T v="label" color={selected ? c.accent : c.fgFaint}>
                 {String.fromCharCode(65 + j)}
               </T>
               <T v="body" style={{ flex: 1 }}>
@@ -192,8 +206,9 @@ export default function Unlock() {
           );
         })}
       </View>
-      <PrimaryButton label={last ? 'Answer' : 'Next'} disabled={answers[qi] == null} onPress={() => (last ? answer() : setQi(qi + 1))} style={{ marginTop: SPACE.s32 }} />
-      {!hard && <TextButton label="Cancel" onPress={cancel} style={{ alignItems: 'flex-end' }} />}
+
+      <PrimaryButton label={last ? 'Check my answers' : 'Next question'} disabled={answers[qi] == null} onPress={() => (last ? answer() : setQi(qi + 1))} style={{ marginTop: SPACE.s32 }} />
+      {!hard && <TextButton label="Cancel" onPress={cancel} align="right" />}
     </ScrollView>
   );
 }
@@ -201,22 +216,25 @@ export default function Unlock() {
 function AnswerKey({ items }: { items: ReviewItem[] }) {
   const { c } = useTheme();
   return (
-    <View style={{ marginTop: SPACE.lg, gap: SPACE.md }}>
+    <View style={{ marginTop: SPACE.xxl }}>
+      <Rule label="the answer" />
       {items.map((r, i) => (
-        <Card key={i}>
+        <View key={i} style={{ paddingVertical: SPACE.lg, borderBottomWidth: i === items.length - 1 ? 0 : 1, borderBottomColor: c.border }}>
           <T v="bodySm" color={c.fgMuted}>
             {r.q}
           </T>
           <T v="body" style={{ marginTop: SPACE.xs }}>
-            {`${r.correct} was right.`}
-            {r.picked ? ` You picked ${r.picked}.` : ''}
+            <T v="body" color={c.accent}>
+              {r.correct}
+            </T>
+            {r.picked ? `, not ${r.picked}.` : '. You left it blank.'}
           </T>
           {r.why ? (
             <T v="bodySm" color={c.fgMuted} style={{ marginTop: SPACE.xs }}>
               {r.why}
             </T>
           ) : null}
-        </Card>
+        </View>
       ))}
     </View>
   );
@@ -232,15 +250,17 @@ function Blocked({ until, review, onClose }: { until: number; review: ReviewItem
   }, []);
   const minutes = Math.ceil((until - now) / 60_000);
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: c.bg }} contentContainerStyle={{ paddingTop: insets.top + SPACE.lg, paddingHorizontal: SPACE.xl, paddingBottom: insets.bottom + SPACE.s32 }}>
-      <Eyebrow color={c.danger}>mull · blocked</Eyebrow>
-      <T v="title" style={{ marginTop: SPACE.lg }}>
+    <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingTop: insets.top + SPACE.xl, paddingHorizontal: GUTTER, paddingBottom: insets.bottom + SPACE.s32 }}>
+      <T v="label" color={c.danger}>
+        mull · blocked
+      </T>
+      <T v="title" style={{ marginTop: SPACE.xl }}>
         That is enough misses.
       </T>
       <T v="body" color={c.fgMuted} style={{ marginTop: SPACE.sm }}>
-        {`Come back in ${Math.max(1, minutes)} minute${minutes === 1 ? '' : 's'}.`}
+        {`Come back in ${Math.max(1, minutes)} minute${minutes === 1 ? '' : 's'}. Go think without the machine for a bit.`}
       </T>
-      <T v="numeral" color={c.danger} style={{ marginTop: SPACE.xxl, textAlign: 'center' }}>
+      <T v="numeralLg" color={c.fg} style={{ marginTop: SPACE.xxl }}>
         {formatClock(until - now)}
       </T>
       {review.length > 0 && <AnswerKey items={review} />}

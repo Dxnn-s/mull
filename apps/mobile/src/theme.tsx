@@ -2,66 +2,75 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from '
 import { AccessibilityInfo, PixelRatio, type TextStyle } from 'react-native';
 
 /**
- * Tokens from projects/mull/design/mobile-spec.md section 1. Same key names as
- * packages/core/src/theme.ts so the web and the app read side by side.
+ * Paper and ink. Light is the default: warm stock, ink type, one accent used
+ * sparingly, hairline rules instead of filled cards. No glow, no second accent,
+ * no dashboard cyan. The register is an architect's planner, not an AI console.
+ *
+ * Light hexes are the brand anchor exactly (Operator Amber light #f7f3e9/#b45309,
+ * Atelier Sage light #f1f0e6/#3f6212). Dark is warmed off the anchor's near-black
+ * so it reads as dark card stock rather than a void.
  */
 export type Palette = 'amber' | 'sage';
 export type Mode = 'dark' | 'light';
 
 export interface Colors {
+  /** Paper. */
   bg: string;
+  /** A panel, barely separated from the paper. */
   surface: string;
+  /** Pressed or inset fill. */
   surface2: string;
+  /** Hairline rule. */
   border: string;
+  /** Ink. */
   fg: string;
   fgMuted: string;
+  /** Tick marks, empty pips, disabled. */
+  fgFaint: string;
   accent: string;
-  accentBright: string;
   accentSoft: string;
   accentBorder: string;
-  /** Orb core highlight, dark only. Never text. */
-  accentCore: string;
-  live: string;
-  /** Numbers the user did not earn: counts, medians. Light mode uses dataStrong (spec footnote 1). */
-  data: string;
   danger: string;
+  /** Grain opacity for this mode. */
+  grain: number;
 }
 
-const DARK_BASE = {
-  surface: 'rgba(255,255,255,0.04)',
-  surface2: 'rgba(255,255,255,0.07)',
-  border: 'rgba(255,255,255,0.10)',
-  fg: '#ececf1',
-  fgMuted: 'rgba(236,236,241,0.62)',
-  live: '#22c55e',
-  data: '#22d3ee',
-  danger: '#ef4444',
-};
-const LIGHT_BASE = {
-  surface: 'rgba(20,16,8,0.04)',
-  surface2: 'rgba(20,16,8,0.07)',
-  border: 'rgba(20,16,8,0.12)',
+const LIGHT = {
+  surface: 'rgba(26,23,16,0.035)',
+  surface2: 'rgba(26,23,16,0.075)',
+  border: 'rgba(26,23,16,0.13)',
   fg: '#1a1710',
-  fgMuted: 'rgba(26,23,16,0.62)',
-  live: '#15803d',
-  data: '#0e7490',
-  danger: '#dc2626',
+  fgMuted: 'rgba(26,23,16,0.58)',
+  fgFaint: 'rgba(26,23,16,0.20)',
+  danger: '#9f1239',
+  grain: 0.02,
+};
+const DARK = {
+  surface: 'rgba(240,235,224,0.045)',
+  surface2: 'rgba(240,235,224,0.09)',
+  border: 'rgba(240,235,224,0.14)',
+  fg: '#f0ebe0',
+  fgMuted: 'rgba(240,235,224,0.56)',
+  fgFaint: 'rgba(240,235,224,0.18)',
+  danger: '#e2818f',
+  grain: 0.05,
 };
 
 export const COLORS: Record<Palette, Record<Mode, Colors>> = {
   amber: {
-    dark: { ...DARK_BASE, bg: '#0a0a0e', accent: '#f59e0b', accentBright: '#fbbf24', accentSoft: 'rgba(245,158,11,0.14)', accentBorder: 'rgba(245,158,11,0.35)', accentCore: '#fcd34d' },
-    light: { ...LIGHT_BASE, bg: '#f7f3e9', accent: '#b45309', accentBright: '#d97706', accentSoft: 'rgba(180,83,9,0.12)', accentBorder: 'rgba(180,83,9,0.35)', accentCore: '#d97706' },
+    light: { ...LIGHT, bg: '#f8f4e8', accent: '#b45309', accentSoft: 'rgba(180,83,9,0.10)', accentBorder: 'rgba(180,83,9,0.32)' },
+    dark: { ...DARK, bg: '#14120d', accent: '#dd9440', accentSoft: 'rgba(221,148,64,0.13)', accentBorder: 'rgba(221,148,64,0.32)' },
   },
   sage: {
-    dark: { ...DARK_BASE, bg: '#0a0e0b', accent: '#65a30d', accentBright: '#84cc16', accentSoft: 'rgba(132,204,22,0.14)', accentBorder: 'rgba(132,204,22,0.35)', accentCore: '#bef264' },
-    light: { ...LIGHT_BASE, bg: '#f1f0e6', accent: '#3f6212', accentBright: '#4d7c0f', accentSoft: 'rgba(63,98,18,0.12)', accentBorder: 'rgba(63,98,18,0.35)', accentCore: '#4d7c0f' },
+    light: { ...LIGHT, bg: '#f2f1e4', accent: '#3f6212', accentSoft: 'rgba(63,98,18,0.10)', accentBorder: 'rgba(63,98,18,0.32)' },
+    dark: { ...DARK, bg: '#101310', accent: '#96b055', accentSoft: 'rgba(150,176,85,0.13)', accentBorder: 'rgba(150,176,85,0.32)' },
   },
 };
 
 export const SPACE = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24, s32: 32, s40: 40, s56: 56, s72: 72 } as const;
-export const RADIUS = { chip: 10, card: 14, sheet: 24, button: 28, orb: 999 } as const;
-export const GUTTER = 20;
+/** Print radii. A corner you can notice is a corner that dates the app. */
+export const RADIUS = { chip: 3, card: 4, sheet: 16, button: 3, full: 999 } as const;
+export const GUTTER = 22;
 
 export const FONT = {
   serif: 'InstrumentSerif_400Regular',
@@ -71,21 +80,28 @@ export const FONT = {
   monoMedium: 'GeistMono_500Medium',
 } as const;
 
-/** Type roles from the spec. Sizes scale with Dynamic Type per the caps in section 6. */
-export function typeRoles(scale: number): Record<'display' | 'title' | 'section' | 'body' | 'bodySm' | 'label' | 'numeral' | 'numeralSm' | 'button', TextStyle> {
+/**
+ * The big numbers are the serif, not neon mono. Mono is reserved for small
+ * technical labels and anything that ticks (a countdown needs tabular figures).
+ */
+export function typeRoles(scale: number): Record<
+  'display' | 'title' | 'section' | 'body' | 'bodySm' | 'label' | 'numeralLg' | 'numeralMd' | 'numeralSm' | 'button',
+  TextStyle
+> {
   const sans = Math.min(scale, 1.6);
   const serif = Math.min(scale, 1.3);
   const mono = Math.min(scale, 1.2);
   return {
-    display: { fontFamily: FONT.serif, fontSize: 40 * serif, lineHeight: 44 * serif },
-    title: { fontFamily: FONT.serif, fontSize: 28 * serif, lineHeight: 34 * serif },
-    section: { fontFamily: FONT.sansMedium, fontSize: 18 * sans, lineHeight: 24 * sans },
-    body: { fontFamily: FONT.sans, fontSize: 16 * sans, lineHeight: 24 * sans },
-    bodySm: { fontFamily: FONT.sans, fontSize: 14 * sans, lineHeight: 20 * sans },
-    label: { fontFamily: FONT.monoMedium, fontSize: 11 * mono, lineHeight: 14 * mono, letterSpacing: 1.2, textTransform: 'uppercase' },
-    numeral: { fontFamily: FONT.monoMedium, fontSize: 56, lineHeight: 56, fontVariant: ['tabular-nums'] },
-    numeralSm: { fontFamily: FONT.monoMedium, fontSize: 24 * mono, lineHeight: 28 * mono, fontVariant: ['tabular-nums'] },
-    button: { fontFamily: FONT.sansMedium, fontSize: 17 * sans, lineHeight: 22 * sans },
+    display: { fontFamily: FONT.serif, fontSize: 38 * serif, lineHeight: 42 * serif },
+    title: { fontFamily: FONT.serif, fontSize: 27 * serif, lineHeight: 33 * serif },
+    section: { fontFamily: FONT.sansMedium, fontSize: 17 * sans, lineHeight: 23 * sans },
+    body: { fontFamily: FONT.sans, fontSize: 16 * sans, lineHeight: 25 * sans },
+    bodySm: { fontFamily: FONT.sans, fontSize: 13.5 * sans, lineHeight: 20 * sans },
+    label: { fontFamily: FONT.monoMedium, fontSize: 10.5 * mono, lineHeight: 14 * mono, letterSpacing: 1.3, textTransform: 'uppercase' },
+    numeralLg: { fontFamily: FONT.serif, fontSize: 64, lineHeight: 66 },
+    numeralMd: { fontFamily: FONT.monoMedium, fontSize: 30, lineHeight: 32, fontVariant: ['tabular-nums'] },
+    numeralSm: { fontFamily: FONT.serif, fontSize: 26, lineHeight: 30 },
+    button: { fontFamily: FONT.sansMedium, fontSize: 16.5 * sans, lineHeight: 22 * sans },
   };
 }
 

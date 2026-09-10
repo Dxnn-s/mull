@@ -35,7 +35,7 @@ const seedSettings = (palette, theme) => ({
   provider: 'mock', apiKey: '', subjects: ['Calculus', 'Physics'], conceptMemoryDays: 2, palette, theme, questionsPerGate: 2,
   hardMode: { enabled: true, blockMinutes: 10, failsBeforeBlock: 2, schedule: { days: [1, 2, 3, 4], start: '19:00', end: '23:00' } },
 });
-for (const [palette, theme] of [['amber', 'dark'], ['sage', 'dark'], ['amber', 'light']]) {
+for (const [palette, theme] of [['amber', 'light'], ['sage', 'light'], ['amber', 'dark']]) {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
   page.on('pageerror', (e) => console.log('[pageerror]', e.message.slice(0, 200)));
   await page.goto(base + '/');
@@ -45,8 +45,19 @@ for (const [palette, theme] of [['amber', 'dark'], ['sage', 'dark'], ['amber', '
       localStorage.setItem('mull.settings', JSON.stringify(settings));
       localStorage.setItem('mull.session', JSON.stringify({ startedAt: Date.now() - 6 * 60_000, endsAt: Date.now() + 19 * 60_000, unlockUntil: null }));
       localStorage.setItem('mull.savedSeconds', '5040');
+      localStorage.setItem('mull.unlockMinutes', '15');
       localStorage.setItem('mull.blockedAppCount', '3');
-      localStorage.setItem('mull.stats', JSON.stringify({ total: 12, gated: 9, passed: 7, failed: 2, skipped: 1, cancelled: 1, streak: 4, bestStreak: 6, recent: [], corrections: [] }));
+      const monday = new Date(); monday.setHours(0,0,0,0); monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
+      const ev = (day, hour, outcome, concept) => ({ ts: monday.getTime() + day*86400000 + hour*3600000, site: 'app', verdict: 'LAZY', gated: true, outcome, concept, attempts: 1, ms: 38000 + day*2000 });
+      const recent = [
+        ev(0, 20, 'passed', 'the chain rule'), ev(0, 21, 'passed', 'p-values'), ev(0, 22, 'skipped'),
+        ev(1, 19, 'passed', 'torque'), ev(1, 20, 'passed', 'osmosis'), ev(1, 21, 'passed', 'limits at infinity'), ev(1, 22, 'cancelled'),
+        ev(2, 20, 'passed', 'kinetic energy'), ev(2, 21, 'failed'), ev(2, 21, 'passed', 'implicit differentiation'),
+        ev(3, 19, 'passed', 'simple harmonic motion'), ev(3, 20, 'skipped'), ev(3, 21, 'passed', 'u-substitution'),
+      ];
+      localStorage.setItem('mull.stats', JSON.stringify({ total: 26, gated: 22, passed: 9, failed: 1, skipped: 2, cancelled: 1, allowlisted: 0, remembered: 3, blocked: 0, streak: 4, bestStreak: 6, recent, corrections: [] }));
+      const mem = {}; for (const e of recent) if (e.outcome === 'passed' && e.concept) mem[e.concept] = { passedAt: e.ts, passes: 1 + (mem[e.concept]?.passes ?? 0) };
+      localStorage.setItem('mull.memory', JSON.stringify(mem));
     },
     { settings: seedSettings(palette, theme) },
   );

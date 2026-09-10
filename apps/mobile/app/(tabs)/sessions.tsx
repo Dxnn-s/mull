@@ -4,8 +4,8 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { EXAM_WEEK, SCHOOL_NIGHTS } from '@mull/core/schedule';
 import { useStore } from '@/store';
-import { RADIUS, SPACE, useTheme } from '@/theme';
-import { Card, T } from '@/ui';
+import { GUTTER, RADIUS, SPACE, useTheme } from '@/theme';
+import { Rule, T } from '@/ui';
 import { describeSchedule } from './index';
 
 export default function Sessions() {
@@ -31,97 +31,96 @@ export default function Sessions() {
   const examOn = hm.enabled && hm.schedule?.start === EXAM_WEEK.start && hm.schedule.days.length === 7;
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: c.bg }} contentContainerStyle={{ paddingTop: insets.top + SPACE.lg, paddingHorizontal: SPACE.xl, paddingBottom: SPACE.s40 }}>
+    <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingTop: insets.top + SPACE.lg, paddingHorizontal: GUTTER, paddingBottom: SPACE.s40 }}>
       <T v="display">Sessions.</T>
 
-      <T v="label" color={c.fgMuted} style={{ marginTop: SPACE.s32 }}>
-        quick start
-      </T>
-      <View style={{ flexDirection: 'row', gap: SPACE.md, marginTop: SPACE.md }}>
+      <Rule label="start one" style={{ marginTop: SPACE.s32 }} />
+      <View style={{ flexDirection: 'row', marginTop: SPACE.lg, borderTopWidth: 1, borderBottomWidth: 1, borderColor: c.border }}>
         {[
-          { v: '25', k: 'min', on: () => start(25) },
-          { v: '50', k: 'min', on: () => start(50) },
+          { v: '25', k: 'minutes', on: () => start(25) },
+          { v: '50', k: 'minutes', on: () => start(50) },
           { v: '11pm', k: 'until', on: untilEleven },
-        ].map((q) => (
-          <Pressable key={q.v} accessibilityRole="button" onPress={q.on} style={{ flex: 1 }}>
-            <Card style={{ alignItems: 'center', paddingVertical: SPACE.lg }}>
+        ].map((q, i) => (
+          <Pressable key={q.v} accessibilityRole="button" onPress={q.on} style={({ pressed }) => [{ flex: 1, paddingVertical: SPACE.lg, borderLeftWidth: i ? 1 : 0, borderLeftColor: c.border, backgroundColor: pressed ? c.surface2 : 'transparent' }]}>
+            <View style={{ paddingLeft: i ? SPACE.lg : 0 }}>
               <T v="numeralSm">{q.v}</T>
-              <T v="label" color={c.fgMuted} style={{ marginTop: SPACE.xs }}>
+              <T v="label" color={c.fgMuted} style={{ marginTop: 2 }}>
                 {q.k}
               </T>
-            </Card>
+            </View>
           </Pressable>
         ))}
       </View>
 
-      <T v="label" color={c.fgMuted} style={{ marginTop: SPACE.s32 }}>
-        study hours
-      </T>
-      <Card style={{ marginTop: SPACE.md, gap: SPACE.md }}>
-        <Row label={hm.schedule ? describeSchedule(hm.schedule) : 'No hours set'} right={<Text_ color={c.fgMuted}>{hm.schedule ? '' : ''}</Text_>} />
-        <Pressable onPress={() => setHm({ enabled: true, schedule: SCHOOL_NIGHTS })}>
-          <T v="bodySm" color={c.accent}>
-            Use school nights (Mon to Thu, 7 to 11 pm)
-          </T>
-        </Pressable>
-        <Pressable onPress={() => setHm({ schedule: null })}>
-          <T v="bodySm" color={c.fgMuted}>
-            Clear hours
-          </T>
-        </Pressable>
-      </Card>
+      <Rule label="study hours" style={{ marginTop: SPACE.s32 }} />
+      <View style={{ marginTop: SPACE.lg }}>
+        <T v="body">{hm.schedule ? describeSchedule(hm.schedule) : 'No hours set.'}</T>
+        <View style={{ flexDirection: 'row', gap: SPACE.xl, marginTop: SPACE.sm }}>
+          <Pressable onPress={() => setHm({ enabled: true, schedule: SCHOOL_NIGHTS })}>
+            <T v="bodySm" color={c.accent} style={{ textDecorationLine: 'underline' }}>
+              School nights
+            </T>
+          </Pressable>
+          <Pressable onPress={() => setHm({ schedule: null })}>
+            <T v="bodySm" color={c.fgMuted} style={{ textDecorationLine: 'underline' }}>
+              Clear
+            </T>
+          </Pressable>
+        </View>
+      </View>
 
-      <Card style={{ marginTop: SPACE.md, gap: SPACE.lg }}>
-        <Row label="Exam week" right={<Toggle value={!!examOn} onChange={(v) => setHm({ enabled: v ? true : hm.enabled, schedule: v ? EXAM_WEEK : null })} />} />
-        <Row label="Hard mode" right={<Toggle value={hm.enabled} onChange={(v) => setHm({ enabled: v })} />} />
+      <Rule label="teeth" style={{ marginTop: SPACE.s32 }} />
+      <View style={{ marginTop: SPACE.sm }}>
+        <Row label="Exam week" hint="every hour of every day" right={<Toggle value={!!examOn} onChange={(v) => setHm({ enabled: v ? true : hm.enabled, schedule: v ? EXAM_WEEK : null })} />} />
+        <Row label="Hard mode" hint="no skip button" right={<Toggle value={hm.enabled} onChange={(v) => setHm({ enabled: v })} />} />
         <Row
           label="Block after"
+          hint={`${hm.blockMinutes} minutes locked out`}
           right={
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.md }}>
               <Step label="−" onPress={() => setHm({ failsBeforeBlock: Math.max(1, hm.failsBeforeBlock - 1) })} />
               <T v="numeralSm">{`${hm.failsBeforeBlock}`}</T>
               <Step label="+" onPress={() => setHm({ failsBeforeBlock: Math.min(5, hm.failsBeforeBlock + 1) })} />
-              <T v="bodySm" color={c.fgMuted}>
-                misses
-              </T>
             </View>
           }
+          last
         />
-      </Card>
-      <T v="bodySm" color={c.fgMuted} style={{ marginTop: SPACE.md }}>
-        Hard mode means no skip.
-      </T>
+      </View>
     </ScrollView>
   );
 }
 
-/** Accent track, pale thumb, on every platform. react-native-web needs activeThumbColor or it paints its own teal. */
+/** Accent track, paper thumb, on every platform. react-native-web needs activeThumbColor or it paints its own teal. */
 function Toggle({ value, onChange }: { value: boolean; onChange(v: boolean): void }) {
   const { c } = useTheme();
-  const webOnly = { activeThumbColor: '#ececf1' } as object;
-  return <Switch value={value} onValueChange={onChange} trackColor={{ true: c.accent, false: c.surface2 }} thumbColor="#ececf1" ios_backgroundColor={c.surface2} {...webOnly} />;
+  const webOnly = { activeThumbColor: c.bg } as object;
+  return <Switch value={value} onValueChange={onChange} trackColor={{ true: c.accent, false: c.surface2 }} thumbColor={c.bg} ios_backgroundColor={c.surface2} {...webOnly} />;
 }
 
-function Row({ label, right }: { label: string; right: React.ReactNode }) {
+function Row({ label, hint, right, last }: { label: string; hint?: string; right: React.ReactNode; last?: boolean }) {
+  const { c } = useTheme();
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 32 }}>
-      <T v="body">{label}</T>
+    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: SPACE.lg, borderBottomWidth: last ? 0 : 1, borderBottomColor: c.border, gap: SPACE.lg }}>
+      <View style={{ flex: 1 }}>
+        <T v="body">{label}</T>
+        {hint ? (
+          <T v="bodySm" color={c.fgMuted}>
+            {hint}
+          </T>
+        ) : null}
+      </View>
       {right}
     </View>
   );
 }
-function Text_({ children, color }: { children: React.ReactNode; color: string }) {
-  return (
-    <T v="bodySm" color={color}>
-      {children}
-    </T>
-  );
-}
+
 function Step({ label, onPress }: { label: string; onPress(): void }) {
   const { c } = useTheme();
   return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={{ width: 36, height: 36, borderRadius: RADIUS.chip, alignItems: 'center', justifyContent: 'center', backgroundColor: c.surface2, borderWidth: 1, borderColor: c.border }}>
-      <T v="body">{label}</T>
+    <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [{ width: 40, height: 40, borderRadius: RADIUS.chip, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: c.border, backgroundColor: pressed ? c.surface2 : 'transparent' }]}>
+      <T v="body" color={c.fgMuted}>
+        {label}
+      </T>
     </Pressable>
   );
 }

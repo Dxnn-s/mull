@@ -1,12 +1,46 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { Text, View, type ColorValue } from 'react-native';
-import { FONT, useTheme } from '@/theme';
+import { Pressable, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SPACE, useTheme } from '@/theme';
 
-function Icon({ glyph, color }: { glyph: string; color: ColorValue }) {
+/**
+ * Label-only tabs with a rule over the active one. No icon set, because a row of
+ * generic glyphs is the fastest way to look like every other app.
+ */
+interface TabBarProps {
+  state: { index: number; routes: Array<{ key: string; name: string }> };
+  descriptors: Record<string, { options: { title?: string } }>;
+  navigation: {
+    emit(e: { type: 'tabPress'; target: string; canPreventDefault: true }): { defaultPrevented: boolean };
+    navigate(name: string): void;
+  };
+}
+
+function TabBar({ state, descriptors, navigation }: TabBarProps) {
+  const { c, t } = useTheme();
+  const insets = useSafeAreaInsets();
   return (
-    <View style={{ width: 24, height: 24, alignItems: 'center', justifyContent: 'center' }}>
-      <Text style={{ color, fontSize: 18, fontFamily: FONT.monoMedium }}>{glyph}</Text>
+    <View style={{ flexDirection: 'row', borderTopWidth: 1, borderTopColor: c.border, paddingBottom: insets.bottom || SPACE.md, backgroundColor: c.bg }}>
+      {state.routes.map((route, i) => {
+        const focused = state.index === i;
+        const label = (descriptors[route.key]?.options.title ?? route.name) as string;
+        return (
+          <Pressable
+            key={route.key}
+            accessibilityRole="button"
+            accessibilityState={{ selected: focused }}
+            onPress={() => {
+              const e = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+              if (!focused && !e.defaultPrevented) navigation.navigate(route.name);
+            }}
+            style={{ flex: 1, alignItems: 'center', paddingTop: SPACE.md, paddingBottom: SPACE.sm }}
+          >
+            <View style={{ height: 2, width: 20, backgroundColor: focused ? c.accent : 'transparent', marginBottom: SPACE.sm }} />
+            <Text style={[t.label, { color: focused ? c.fg : c.fgMuted }]}>{label}</Text>
+          </Pressable>
+        );
+      })}
     </View>
   );
 }
@@ -14,20 +48,11 @@ function Icon({ glyph, color }: { glyph: string; color: ColorValue }) {
 export default function TabsLayout() {
   const { c } = useTheme();
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        sceneStyle: { backgroundColor: c.bg },
-        tabBarStyle: { backgroundColor: c.bg, borderTopColor: c.border, borderTopWidth: 1, height: 84, paddingTop: 8 },
-        tabBarActiveTintColor: c.accent,
-        tabBarInactiveTintColor: c.fgMuted,
-        tabBarLabelStyle: { fontFamily: FONT.monoMedium, fontSize: 10, letterSpacing: 1, textTransform: 'uppercase' },
-      }}
-    >
-      <Tabs.Screen name="index" options={{ title: 'Home', tabBarIcon: ({ color }) => <Icon glyph="●" color={color} /> }} />
-      <Tabs.Screen name="sessions" options={{ title: 'Sessions', tabBarIcon: ({ color }) => <Icon glyph="◔" color={color} /> }} />
-      <Tabs.Screen name="stats" options={{ title: 'Stats', tabBarIcon: ({ color }) => <Icon glyph="▮" color={color} /> }} />
-      <Tabs.Screen name="you" options={{ title: 'You', tabBarIcon: ({ color }) => <Icon glyph="◐" color={color} /> }} />
+    <Tabs screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: c.bg } }} tabBar={(p) => <TabBar {...(p as unknown as TabBarProps)} />}>
+      <Tabs.Screen name="index" options={{ title: 'Today' }} />
+      <Tabs.Screen name="sessions" options={{ title: 'Sessions' }} />
+      <Tabs.Screen name="stats" options={{ title: 'Record' }} />
+      <Tabs.Screen name="you" options={{ title: 'You' }} />
     </Tabs>
   );
 }

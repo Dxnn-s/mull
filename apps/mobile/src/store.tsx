@@ -29,8 +29,8 @@ export interface AppState {
   unlockMinutes: number;
   /** Seconds saved: sum of shielded session time. */
   savedSeconds: number;
-  /** Dev toggle: force an orb state on Home. */
-  devOrb: string | null;
+  /** Dev toggle: force a dial state on Today. */
+  devDial: string | null;
 }
 
 const KEYS: Record<keyof AppState, string> = {
@@ -42,11 +42,11 @@ const KEYS: Record<keyof AppState, string> = {
   blockedAppCount: 'mull.blockedAppCount',
   unlockMinutes: 'mull.unlockMinutes',
   savedSeconds: 'mull.savedSeconds',
-  devOrb: 'mull.devOrb',
+  devDial: 'mull.devDial',
 };
 
 export const DEFAULT_APP_STATE: AppState = {
-  settings: mergeSettings({ provider: 'mock', apiKey: '', subjects: ['Calculus'], conceptMemoryDays: 2 }),
+  settings: mergeSettings({ provider: 'mock', apiKey: '', subjects: ['Calculus'], conceptMemoryDays: 2, theme: 'light', palette: 'amber' }),
   stats: normalizeStats(null),
   memory: {},
   block: null,
@@ -54,7 +54,7 @@ export const DEFAULT_APP_STATE: AppState = {
   blockedAppCount: 0,
   unlockMinutes: 15,
   savedSeconds: 0,
-  devOrb: null,
+  devDial: null,
 };
 
 async function load(): Promise<AppState> {
@@ -80,7 +80,7 @@ async function load(): Promise<AppState> {
     blockedAppCount: (raw[KEYS.blockedAppCount] as number) ?? 0,
     unlockMinutes: (raw[KEYS.unlockMinutes] as number) ?? 15,
     savedSeconds: (raw[KEYS.savedSeconds] as number) ?? 0,
-    devOrb: (raw[KEYS.devOrb] as string | null) ?? null,
+    devDial: (raw[KEYS.devDial] as string | null) ?? null,
   };
 }
 

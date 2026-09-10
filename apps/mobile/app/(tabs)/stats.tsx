@@ -5,11 +5,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { listConcepts, medianCardMs } from '@mull/core/stats';
 import { buildRecap, weekStart } from '@mull/core/recap';
 import { useStore } from '@/store';
-import { SPACE, useTheme } from '@/theme';
-import { Card, StatTile, T } from '@/ui';
+import { GUTTER, SPACE, useTheme } from '@/theme';
+import { FigureRow, Rule, T } from '@/ui';
 import { formatSaved } from '@/quiz';
 
-export default function Stats() {
+export default function Record() {
   const { state } = useStore();
   const { c } = useTheme();
   const insets = useSafeAreaInsets();
@@ -28,67 +28,81 @@ export default function Stats() {
   });
   const recap = buildRecap(stats, memory);
   const median = medianCardMs(stats);
+  const concepts = listConcepts(memory);
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: c.bg }} contentContainerStyle={{ paddingTop: insets.top + SPACE.lg, paddingHorizontal: SPACE.xl, paddingBottom: SPACE.s40 }}>
-      <T v="display">Stats.</T>
-      <View style={{ alignItems: 'center', marginTop: SPACE.s32 }}>
-        <T v="numeral" color={c.accent}>
-          {formatSaved(state.savedSeconds)}
-        </T>
-        <T v="label" color={c.fgMuted} style={{ marginTop: SPACE.sm }}>
-          saved all time
-        </T>
-      </View>
-      <View style={{ flexDirection: 'row', gap: SPACE.md, marginTop: SPACE.xxl }}>
-        <StatTile value={week.filter((e) => e.gated).length} caption="gated" data />
-        <StatTile value={week.filter((e) => e.outcome === 'passed').length} caption="held" data />
-        <StatTile value={week.filter((e) => e.outcome === 'cancelled').length} caption="walked away" data />
-      </View>
+    <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingTop: insets.top + SPACE.lg, paddingHorizontal: GUTTER, paddingBottom: SPACE.s40 }}>
+      <T v="display">Record.</T>
 
-      <Card style={{ marginTop: SPACE.md, gap: SPACE.sm }}>
+      <T v="numeralLg" style={{ marginTop: SPACE.s32 }}>
+        {formatSaved(state.savedSeconds)}
+      </T>
+      <T v="label" color={c.fgMuted} style={{ marginTop: SPACE.xs }}>
+        shielded all time
+      </T>
+
+      <FigureRow
+        style={{ marginTop: SPACE.xxl }}
+        items={[
+          { value: week.filter((e) => e.gated).length, caption: 'gated' },
+          { value: week.filter((e) => e.outcome === 'passed').length, caption: 'held', accent: true },
+          { value: week.filter((e) => e.outcome === 'cancelled').length, caption: 'walked' },
+        ]}
+      />
+
+      <Rule label="this week" style={{ marginTop: SPACE.s32 }} />
+      <View style={{ marginTop: SPACE.lg, gap: SPACE.md }}>
         {days.map((d) => (
           <View key={d.label} style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.md }}>
-            <T v="label" color={c.fgMuted} style={{ width: 36 }}>
+            <T v="label" color={c.fgMuted} style={{ width: 34 }}>
               {d.label}
             </T>
-            <View style={{ flex: 1, height: 10, borderRadius: 5, backgroundColor: c.accentSoft, overflow: 'hidden' }}>
+            <View style={{ flex: 1, height: 6, backgroundColor: c.surface2 }}>
               <View style={{ width: `${Math.round(d.pct * 100)}%`, height: '100%', backgroundColor: c.accent }} />
             </View>
-            <T v="label" color={c.fgMuted} style={{ width: 40, textAlign: 'right' }}>
-              {d.decided ? `${Math.round(d.pct * 100)}%` : '–'}
+            <T v="label" color={d.decided ? c.fg : c.fgFaint} style={{ width: 36, textAlign: 'right' }}>
+              {d.decided ? `${Math.round(d.pct * 100)}%` : '—'}
             </T>
           </View>
         ))}
-      </Card>
-
-      <View style={{ marginTop: SPACE.lg, gap: SPACE.xs }}>
-        <T v="bodySm" color={c.fgMuted}>{`Median card: ${median ? `${Math.round(median / 1000)}s` : '–'}`}</T>
-        <T v="bodySm" color={c.fgMuted}>{`Concepts learned: ${listConcepts(memory).length}`}</T>
       </View>
 
-      <Card style={{ marginTop: SPACE.lg }}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <T v="label" color={c.accent}>
-            monday recap
-          </T>
-          <Pressable
-            accessibilityRole="button"
-            onPress={async () => {
-              await Clipboard.setStringAsync(recap);
-              setCopied(true);
-              setTimeout(() => setCopied(false), 1500);
-            }}
-          >
-            <T v="label" color={c.fgMuted}>
-              {copied ? 'copied' : 'copy'}
-            </T>
-          </Pressable>
-        </View>
-        <T v="bodySm" style={{ marginTop: SPACE.sm, fontFamily: 'GeistMono_400Regular' }}>
-          {recap}
+      <Rule label="detail" style={{ marginTop: SPACE.s32 }} />
+      <View style={{ marginTop: SPACE.lg }}>
+        <Line k="Median card" v={median ? `${Math.round(median / 1000)}s` : '—'} />
+        <Line k="Concepts learned" v={String(concepts.length)} />
+        <Line k="Best streak" v={String(stats.bestStreak)} last />
+      </View>
+
+      <Rule label="monday recap" style={{ marginTop: SPACE.s32 }} />
+      <T v="body" style={{ marginTop: SPACE.lg, fontFamily: 'GeistMono_400Regular', fontSize: 13.5, lineHeight: 21 }}>
+        {recap}
+      </T>
+      <Pressable
+        accessibilityRole="button"
+        onPress={async () => {
+          await Clipboard.setStringAsync(recap);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1500);
+        }}
+        style={{ paddingVertical: SPACE.md, alignSelf: 'flex-start' }}
+      >
+        <T v="label" color={c.accent}>
+          {copied ? 'copied' : 'copy'}
         </T>
-      </Card>
+      </Pressable>
     </ScrollView>
+  );
+}
+
+function Line({ k, v, last }: { k: string; v: string; last?: boolean }) {
+  const { c } = useTheme();
+  return (
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', paddingVertical: SPACE.md, borderBottomWidth: last ? 0 : 1, borderBottomColor: c.border }}>
+      <T v="body" color={c.fgMuted}>
+        {k}
+      </T>
+      <T v="body">{v}</T>
+    </View>
   );
 }

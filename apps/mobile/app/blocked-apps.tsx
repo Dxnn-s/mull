@@ -3,8 +3,8 @@ import { Pressable, ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useStore } from '@/store';
-import { RADIUS, SPACE, useTheme } from '@/theme';
-import { Chip, SecondaryButton, T, TextButton } from '@/ui';
+import { GUTTER, RADIUS, SPACE, useTheme } from '@/theme';
+import { Chip, Rule, SecondaryButton, T, TextButton } from '@/ui';
 
 /**
  * Session A placeholder. The real screen calls Apple's FamilyActivityPicker from
@@ -19,11 +19,13 @@ export default function BlockedApps() {
   const n = state.blockedAppCount;
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: c.bg }} contentContainerStyle={{ paddingTop: insets.top + SPACE.md, paddingHorizontal: SPACE.xl, paddingBottom: SPACE.s40 }}>
-      <TextButton label="‹ Back" onPress={() => router.back()} style={{ alignItems: 'flex-start', paddingVertical: SPACE.sm }} />
-      <T v="display">Blocked apps.</T>
+    <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingTop: insets.top + SPACE.md, paddingHorizontal: GUTTER, paddingBottom: SPACE.s40 }}>
+      <TextButton label="Back" onPress={() => router.back()} align="left" />
+      <T v="display" style={{ marginTop: SPACE.sm }}>
+        Blocked apps.
+      </T>
       <T v="body" color={c.fgMuted} style={{ marginTop: SPACE.sm }}>
-        {n ? `${n} app${n === 1 ? '' : 's'}. Shielded during every session.` : 'Pick the apps to shield during sessions.'}
+        {n ? `${n} app${n === 1 ? '' : 's'}, shielded whenever a session is running.` : 'Pick the apps to shield while a session is running.'}
       </T>
 
       <View style={{ flexDirection: 'row', gap: SPACE.sm, marginTop: SPACE.xxl }}>
@@ -31,22 +33,23 @@ export default function BlockedApps() {
         <Chip label="Exam week" selected={n === 6} onPress={() => update({ blockedAppCount: 6 })} />
       </View>
 
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.md, marginTop: SPACE.xxl }}>
+      <Rule label="picked" style={{ marginTop: SPACE.s32 }} />
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.md, marginTop: SPACE.lg }}>
         {Array.from({ length: n }, (_, i) => (
-          <View key={i} style={{ width: 72, height: 72, borderRadius: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, alignItems: 'center', justifyContent: 'center' }}>
-            <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: c.accentSoft }} />
+          <View key={i} style={{ width: 66, height: 66, borderRadius: RADIUS.card, borderWidth: 1, borderColor: c.border, alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ width: 34, height: 34, borderRadius: 8, backgroundColor: c.accentSoft, borderWidth: 1, borderColor: c.accentBorder }} />
           </View>
         ))}
-        <Pressable accessibilityRole="button" onPress={() => update({ blockedAppCount: n + 1 })} style={{ width: 72, height: 72, borderRadius: 16, borderWidth: 1, borderColor: c.accentBorder, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center' }}>
-          <T v="label" color={c.accent}>
+        <Pressable accessibilityRole="button" onPress={() => update({ blockedAppCount: n + 1 })} style={({ pressed }) => [{ width: 66, height: 66, borderRadius: RADIUS.card, borderWidth: 1, borderColor: c.fgFaint, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.6 : 1 }]}>
+          <T v="label" color={c.fgMuted}>
             add
           </T>
         </Pressable>
       </View>
 
-      <SecondaryButton label="Edit list" onPress={() => update({ blockedAppCount: 0 })} style={{ marginTop: SPACE.s32, borderRadius: RADIUS.button }} />
-      <T v="bodySm" color={c.fgMuted} style={{ marginTop: SPACE.md }}>
-        Apple's picker chooses the apps. Mull only ever sees a count and an opaque token, never a name.
+      {n > 0 && <SecondaryButton label="Clear the list" onPress={() => update({ blockedAppCount: 0 })} style={{ marginTop: SPACE.s32 }} />}
+      <T v="bodySm" color={c.fgMuted} style={{ marginTop: SPACE.xl }}>
+        Apple's own picker chooses these. Mull is handed a sealed token for each one, never a name, so the list above is a count and nothing more.
       </T>
     </ScrollView>
   );

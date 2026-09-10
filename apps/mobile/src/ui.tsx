@@ -1,8 +1,8 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View, type PressableProps, type TextStyle, type ViewStyle } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View, type TextStyle, type ViewStyle } from 'react-native';
 import { RADIUS, SPACE, useTheme } from './theme';
 
-export function T({ v, color, style, children, ...rest }: { v: keyof ReturnType<typeof useTheme>['t']; color?: string; style?: TextStyle; children: React.ReactNode } & Omit<React.ComponentProps<typeof Text>, 'style'>) {
+export function T({ v, color, style, children, ...rest }: { v: keyof ReturnType<typeof useTheme>['t']; color?: string; style?: TextStyle | TextStyle[]; children: React.ReactNode } & Omit<React.ComponentProps<typeof Text>, 'style'>) {
   const { t, c } = useTheme();
   return (
     <Text {...rest} style={[t[v], { color: color ?? c.fg }, style]}>
@@ -11,35 +11,45 @@ export function T({ v, color, style, children, ...rest }: { v: keyof ReturnType<
   );
 }
 
-export function Eyebrow({ children, color }: { children: React.ReactNode; color?: string }) {
+/**
+ * Paper grain: one 512px noise plate stretched over the screen. Stretched rather
+ * than tiled because react-native-web renders resizeMode="repeat" as a single
+ * tile, which left a visible square in the corner. Noise does not care about
+ * scaling, and at 2% nothing else does either.
+ */
+export function Grain() {
   const { c } = useTheme();
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.sm }}>
-      <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: color ?? c.accent }} />
-      <T v="label" color={color ?? c.accent}>
-        {children}
-      </T>
+    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+      <Image source={require('../assets/grain.png')} resizeMode="cover" style={[StyleSheet.absoluteFill, { opacity: c.grain }]} />
     </View>
   );
 }
 
-export function Card({ children, style, accent }: { children: React.ReactNode; style?: ViewStyle; accent?: boolean }) {
-  const { c, mode } = useTheme();
+/** A section marker: mono label with a hairline running to the edge. */
+export function Rule({ label, style }: { label?: string; style?: ViewStyle }) {
+  const { c } = useTheme();
   return (
-    <View
-      style={[
-        { backgroundColor: c.surface, borderWidth: 1, borderColor: accent ? c.accentBorder : c.border, borderRadius: RADIUS.card, padding: SPACE.lg },
-        mode === 'light' ? { shadowColor: 'rgba(40,30,10,1)', shadowOpacity: 0.1, shadowRadius: 32, shadowOffset: { width: 0, height: 12 } } : null,
-        style,
-      ]}
-    >
-      {children}
+    <View style={[{ flexDirection: 'row', alignItems: 'center', gap: SPACE.md }, style]}>
+      {label ? (
+        <T v="label" color={c.fgMuted}>
+          {label}
+        </T>
+      ) : null}
+      <View style={{ flex: 1, height: 1, backgroundColor: c.border }} />
     </View>
   );
 }
 
-export function PrimaryButton({ label, onPress, disabled, style }: { label: string; onPress(): void; disabled?: boolean; style?: ViewStyle } & Pick<PressableProps, 'onPress'>) {
-  const { c, t, mode, reduceMotion } = useTheme();
+/** A panel. Hairline and a whisper of fill, never a floating glass card. */
+export function Panel({ children, style, accent }: { children: React.ReactNode; style?: ViewStyle; accent?: boolean }) {
+  const { c } = useTheme();
+  return <View style={[{ backgroundColor: accent ? c.accentSoft : c.surface, borderWidth: 1, borderColor: accent ? c.accentBorder : c.border, borderRadius: RADIUS.card, padding: SPACE.lg }, style]}>{children}</View>;
+}
+
+/** Ink block, paper text. The one loud element on a page, and it is not a color. */
+export function PrimaryButton({ label, onPress, disabled, style }: { label: string; onPress(): void; disabled?: boolean; style?: ViewStyle }) {
+  const { c, t, reduceMotion } = useTheme();
   return (
     <Pressable
       accessibilityRole="button"
@@ -47,12 +57,13 @@ export function PrimaryButton({ label, onPress, disabled, style }: { label: stri
       onPress={onPress}
       style={({ pressed }) => [
         styles.button,
-        { backgroundColor: c.accent, opacity: disabled ? 0.5 : 1, transform: [{ scale: pressed && !reduceMotion ? 0.98 : 1 }] },
-        mode === 'dark' ? { shadowColor: c.accent, shadowOpacity: 0.35, shadowRadius: 40, shadowOffset: { width: 0, height: 0 } } : null,
+        disabled
+          ? { backgroundColor: 'transparent', borderWidth: 1, borderColor: c.border }
+          : { backgroundColor: c.fg, opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed && !reduceMotion ? 0.995 : 1 }] },
         style,
       ]}
     >
-      <Text style={[t.button, { color: '#0a0a0e' }]}>{label}</Text>
+      <Text style={[t.button, { color: disabled ? c.fgFaint : c.bg }]}>{label}</Text>
     </Pressable>
   );
 }
@@ -60,17 +71,18 @@ export function PrimaryButton({ label, onPress, disabled, style }: { label: stri
 export function SecondaryButton({ label, onPress, style }: { label: string; onPress(): void; style?: ViewStyle }) {
   const { c, t, reduceMotion } = useTheme();
   return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [styles.button, { backgroundColor: c.surface2, borderWidth: 1, borderColor: c.border, transform: [{ scale: pressed && !reduceMotion ? 0.98 : 1 }] }, style]}>
+    <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [styles.button, { borderWidth: 1, borderColor: c.border, backgroundColor: pressed ? c.surface2 : 'transparent', transform: [{ scale: pressed && !reduceMotion ? 0.995 : 1 }] }, style]}>
       <Text style={[t.button, { color: c.fg }]}>{label}</Text>
     </Pressable>
   );
 }
 
-export function TextButton({ label, onPress, color, style }: { label: string; onPress(): void; color?: string; style?: ViewStyle }) {
+/** Underlined text action. Reads like a footnote, which is the point. */
+export function TextButton({ label, onPress, color, align = 'center', style }: { label: string; onPress(): void; color?: string; align?: 'left' | 'center' | 'right'; style?: ViewStyle }) {
   const { c, t } = useTheme();
   return (
-    <Pressable accessibilityRole="button" onPress={onPress} hitSlop={8} style={[{ paddingVertical: SPACE.md, alignItems: 'center' }, style]}>
-      <Text style={[t.body, { color: color ?? c.fgMuted }]}>{label}</Text>
+    <Pressable accessibilityRole="button" onPress={onPress} hitSlop={10} style={[{ paddingVertical: SPACE.md, alignItems: align === 'center' ? 'center' : align === 'left' ? 'flex-start' : 'flex-end' }, style]}>
+      <Text style={[t.bodySm, { color: color ?? c.fgMuted, textDecorationLine: 'underline', textDecorationColor: c.border }]}>{label}</Text>
     </Pressable>
   );
 }
@@ -82,46 +94,44 @@ export function Chip({ label, selected, onPress }: { label: string; selected?: b
       accessibilityRole="button"
       accessibilityState={{ selected: !!selected }}
       onPress={onPress}
-      style={{ paddingHorizontal: SPACE.md, paddingVertical: SPACE.md, minHeight: 44, justifyContent: 'center', borderRadius: RADIUS.chip, backgroundColor: selected ? c.accentSoft : c.surface, borderWidth: 1, borderColor: selected ? c.accentBorder : c.border }}
+      style={{ paddingHorizontal: SPACE.md, minHeight: 44, justifyContent: 'center', borderRadius: RADIUS.chip, backgroundColor: selected ? c.accentSoft : 'transparent', borderWidth: 1, borderColor: selected ? c.accentBorder : c.border }}
     >
       <Text style={[t.label, { color: selected ? c.accent : c.fgMuted }]}>{label}</Text>
     </Pressable>
   );
 }
 
-export function StatTile({ value, caption, data, flex = 1 }: { value: string | number; caption: string; data?: boolean; flex?: number }) {
+/**
+ * A figure and its caption, set in the serif. Stat rows sit between hairlines
+ * rather than inside boxes, so a screen reads as a page and not a dashboard.
+ */
+export function Figure({ value, caption, accent, align = 'left' }: { value: string | number; caption: string; accent?: boolean; align?: 'left' | 'center' }) {
   const { c } = useTheme();
   return (
-    <Card style={{ flex, paddingVertical: SPACE.md }}>
-      <T v="numeralSm" color={data ? c.data : c.fg}>
+    <View style={{ alignItems: align === 'center' ? 'center' : 'flex-start' }}>
+      <T v="numeralSm" color={accent ? c.accent : c.fg}>
         {String(value)}
       </T>
-      <T v="label" color={c.fgMuted} style={{ marginTop: SPACE.xs }}>
+      <T v="label" color={c.fgMuted} style={{ marginTop: 2 }}>
         {caption}
       </T>
-    </Card>
+    </View>
   );
 }
 
-export function Screen({ children, title, sub }: { children: React.ReactNode; title?: string; sub?: string }) {
+export function FigureRow({ items, style }: { items: Array<{ value: string | number; caption: string; accent?: boolean }>; style?: ViewStyle }) {
   const { c } = useTheme();
   return (
-    <View style={{ flex: 1, backgroundColor: c.bg, paddingHorizontal: SPACE.xl }}>
-      {title ? (
-        <View style={{ paddingTop: SPACE.lg, paddingBottom: SPACE.xxl }}>
-          <T v="display">{title}</T>
-          {sub ? (
-            <T v="body" color={c.fgMuted} style={{ marginTop: SPACE.sm }}>
-              {sub}
-            </T>
-          ) : null}
+    <View style={[{ borderTopWidth: 1, borderBottomWidth: 1, borderColor: c.border, paddingVertical: SPACE.lg, flexDirection: 'row' }, style]}>
+      {items.map((it, i) => (
+        <View key={it.caption} style={{ flex: 1, borderLeftWidth: i ? 1 : 0, borderLeftColor: c.border, paddingLeft: i ? SPACE.lg : 0 }}>
+          <Figure {...it} />
         </View>
-      ) : null}
-      {children}
+      ))}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  button: { height: 56, borderRadius: RADIUS.button, alignItems: 'center', justifyContent: 'center', paddingHorizontal: SPACE.xxl },
+  button: { height: 54, borderRadius: RADIUS.button, alignItems: 'center', justifyContent: 'center', paddingHorizontal: SPACE.xxl },
 });
