@@ -13,11 +13,19 @@ mkdirSync(out, { recursive: true });
 
 const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.ttf': 'font/ttf', '.json': 'application/json', '.woff2': 'font/woff2' };
 const server = createServer((req, res) => {
-  let p = join(dist, decodeURIComponent((req.url ?? '/').split('?')[0]));
+  const route = decodeURIComponent((req.url ?? '/').split('?')[0]);
+  let p = join(dist, route);
   try {
     if (statSync(p).isDirectory()) p = join(p, 'index.html');
   } catch {
-    p = join(dist, 'index.html');
+    // Static export writes each route as route.html; fall back to the shell otherwise.
+    const asHtml = join(dist, route.replace(/\/$/, '') + '.html');
+    try {
+      statSync(asHtml);
+      p = asHtml;
+    } catch {
+      p = join(dist, 'index.html');
+    }
   }
   try {
     res.setHeader('content-type', types[extname(p)] ?? 'application/octet-stream');

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { Platform, Pressable, ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { hardModeUntil, isHardModeNow } from '@mull/core/schedule';
@@ -9,6 +9,7 @@ import { useStore } from '@/store';
 import { GUTTER, SPACE, useTheme } from '@/theme';
 import { FigureRow, PrimaryButton, T, TextButton } from '@/ui';
 import { formatClock, formatSaved } from '@/quiz';
+import { isIOSWeb, isInstalled } from '@/pwa';
 
 export default function Today() {
   const { state, update } = useStore();
@@ -75,6 +76,17 @@ export default function Today() {
         {today}
       </T>
 
+      {isIOSWeb() && !isInstalled() && (
+        <View style={{ marginTop: SPACE.lg, borderWidth: 1, borderColor: c.accentBorder, backgroundColor: c.accentSoft, borderRadius: 4, padding: SPACE.md }}>
+          <T v="label" color={c.accent}>
+            add to home screen
+          </T>
+          <T v="bodySm" style={{ marginTop: SPACE.xs }}>
+            Tap Share, then Add to Home Screen. Mull opens full screen and works with no signal.
+          </T>
+        </View>
+      )}
+
       <View style={{ marginTop: SPACE.s32, marginBottom: SPACE.s32 }}>
         <Dial
           state={dial}
@@ -125,7 +137,11 @@ export default function Today() {
         </Pressable>
         <Pressable onPress={() => router.push('/blocked-apps')}>
           <T v="bodySm" color={c.fgMuted}>
-            {state.blockedAppCount ? `${state.blockedAppCount} apps shielded during a session.` : 'No apps picked yet. Tap to choose.'}
+            {Platform.OS === 'web'
+              ? 'Set the block in Shortcuts. Tap to see how.'
+              : state.blockedAppCount
+                ? `${state.blockedAppCount} apps shielded during a session.`
+                : 'No apps picked yet. Tap to choose.'}
           </T>
         </Pressable>
       </View>

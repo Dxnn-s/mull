@@ -50,6 +50,13 @@ function markSvg(size, { bg, stroke, bezel, inset = 0.13, strokeWidth }) {
 
 const JOBS = [
   { file: 'icon.png', size: 1024, opts: { bg: PAPER, stroke: INK, bezel: INK } },
+  // PWA + Add to Home Screen. Apple ignores the manifest icons and uses
+  // apple-touch-icon, which must be opaque and square with no transparency.
+  { file: '../public/apple-touch-icon.png', size: 180, opts: { bg: PAPER, stroke: INK, bezel: INK, strokeWidth: 2.2 } },
+  { file: '../public/icon-192.png', size: 192, opts: { bg: PAPER, stroke: INK, bezel: INK, strokeWidth: 2.3 } },
+  { file: '../public/icon-512.png', size: 512, opts: { bg: PAPER, stroke: INK, bezel: INK, strokeWidth: 6 } },
+  // Maskable: Android crops to a circle, so the mark sits well inside the safe area.
+  { file: '../public/icon-maskable-512.png', size: 512, opts: { bg: PAPER, stroke: INK, bezel: INK, inset: 0.24, strokeWidth: 6 } },
   { file: 'adaptive-icon.png', size: 1024, opts: { bg: PAPER, stroke: INK, bezel: INK, inset: 0.26 } },
   { file: 'splash-icon.png', size: 1024, opts: { bg: null, stroke: INK, bezel: INK, inset: 0.22 } },
   { file: 'favicon.png', size: 96, opts: { bg: PAPER, stroke: INK, bezel: INK, strokeWidth: 1.2 } },

@@ -8,6 +8,7 @@ import { View } from 'react-native';
 import { StoreProvider, useStore } from '@/store';
 import { ThemeProvider, useTheme, type Mode, type Palette } from '@/theme';
 import { Grain } from '@/ui';
+import { registerServiceWorker } from '@/pwa';
 
 /**
  * Expo Router vendors React Navigation, whose default theme paints rgb(242,242,242)
@@ -48,6 +49,8 @@ function Routes() {
     </Stack>
   );
 }
+
+registerServiceWorker();
 
 export default function RootLayout() {
   const [loaded] = useFonts({ InstrumentSerif_400Regular, SpaceGrotesk_400Regular, SpaceGrotesk_500Medium, GeistMono_400Regular, GeistMono_500Medium });
