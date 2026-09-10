@@ -80,3 +80,6 @@ for (const [palette, theme] of [['amber', 'light'], ['sage', 'light'], ['amber',
 }
 await browser.close();
 server.close();
+
+// Rebuild the gallery so screenshots/index.html always matches what was just shot.
+await import('./gallery.mjs');

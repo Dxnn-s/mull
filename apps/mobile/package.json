@@ -38,7 +38,8 @@
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "shots": "node test/screenshots.mjs ../../.tmp-web"
   },
   "private": true
 }
