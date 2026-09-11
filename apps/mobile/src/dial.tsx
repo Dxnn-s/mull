@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, useWindowDimensions, View } from 'react-native';
 import Svg, { Circle, G, Line } from 'react-native-svg';
 import type { Seal } from './guilloche';
@@ -30,9 +30,14 @@ const AnimatedLine = Animated.createAnimatedComponent(Line);
  */
 export function Dial({ state, progress, label, value, a11y, seal }: DialProps) {
   const { c, reduceMotion } = useTheme();
-  const { width } = useWindowDimensions();
+  const { width: windowWidth } = useWindowDimensions();
+  // useWindowDimensions reports 0 on the first paint of a statically rendered
+  // page, which collapsed the whole dial to 0x0 on a cold load. onLayout gives
+  // the real width once the row is measured; the window is only a fallback.
+  const [rowWidth, setRowWidth] = useState(0);
+  const available = rowWidth || windowWidth || 360;
 
-  const size = Math.min(Math.round(width * 0.74), 320);
+  const size = Math.min(Math.round(available * 0.74), 320);
   const box = size;
   const cx = box / 2;
   const cy = box / 2;
@@ -75,7 +80,8 @@ export function Dial({ state, progress, label, value, a11y, seal }: DialProps) {
   });
 
   return (
-    <View accessible accessibilityLabel={a11y} style={{ width: box, height: box, alignSelf: 'center', alignItems: 'center', justifyContent: 'center' }}>
+    <View onLayout={(e) => setRowWidth(e.nativeEvent.layout.width)} style={{ width: '100%', alignItems: 'center' }}>
+      <View accessible accessibilityLabel={a11y} style={{ width: box, height: box, alignItems: 'center', justifyContent: 'center' }}>
       <Rosette
         size={box}
         innerRatio={0.4}
@@ -115,11 +121,12 @@ export function Dial({ state, progress, label, value, a11y, seal }: DialProps) {
             {label}
           </T>
         ) : null}
-        {value ? (
-          <T v="numeralMd" color={state === 'resting' ? c.fgMuted : c.fg}>
-            {value}
-          </T>
-        ) : null}
+          {value ? (
+            <T v="numeralMd" color={state === 'resting' ? c.fgMuted : c.fg}>
+              {value}
+            </T>
+          ) : null}
+        </View>
       </View>
     </View>
   );

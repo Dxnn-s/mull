@@ -44,6 +44,20 @@ const seedSettings = (palette, theme) => ({
   hardMode: { enabled: true, blockMinutes: 10, failsBeforeBlock: 2, schedule: { days: [1, 2, 3, 4], start: '19:00', end: '23:00' } },
 });
 for (const [palette, theme] of [['amber', 'light'], ['sage', 'light'], ['amber', 'dark']]) {
+  // Cold load first: no seeded state, genuine first paint. The seeding pass
+  // below navigates twice, which hid a dial that collapsed to 0x0 on a real
+  // cold load because useWindowDimensions reports 0 during static render.
+  if (palette === 'amber' && theme === 'light') {
+    const cold = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
+    await cold.goto(base + '/');
+    await cold.waitForTimeout(2500);
+    const widths = await cold.evaluate(() => [...document.querySelectorAll('svg')].map((s) => Math.round(s.getBoundingClientRect().width)));
+    await cold.screenshot({ path: resolve(out, 'cold-first-paint.png') });
+    await cold.close();
+    if (!widths.length || widths.some((w) => w === 0)) throw new Error(`cold load: svg rendered at 0 width (${widths.join(', ') || 'none found'})`);
+    console.log('cold load ok, svg widths:', widths.join(', '));
+  }
+
   const page = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
   page.on('pageerror', (e) => console.log('[pageerror]', e.message.slice(0, 200)));
   await page.goto(base + '/');
