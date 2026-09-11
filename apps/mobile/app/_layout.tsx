@@ -1,9 +1,15 @@
 import React, { useCallback } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useFonts, InstrumentSerif_400Regular } from '@expo-google-fonts/instrument-serif';
-import { SpaceGrotesk_400Regular, SpaceGrotesk_500Medium } from '@expo-google-fonts/space-grotesk';
-import { GeistMono_400Regular, GeistMono_500Medium } from '@expo-google-fonts/geist-mono';
+// Per-weight subpaths on purpose. Importing from a font package's root pulls
+// every weight and italic it ships: geist-mono alone added thirty 102KB files
+// to the bundle for the two faces actually used.
+import { useFonts } from 'expo-font';
+import { InstrumentSerif_400Regular } from '@expo-google-fonts/instrument-serif/400Regular';
+import { SpaceGrotesk_400Regular } from '@expo-google-fonts/space-grotesk/400Regular';
+import { SpaceGrotesk_500Medium } from '@expo-google-fonts/space-grotesk/500Medium';
+import { GeistMono_400Regular } from '@expo-google-fonts/geist-mono/400Regular';
+import { GeistMono_500Medium } from '@expo-google-fonts/geist-mono/500Medium';
 import { View } from 'react-native';
 import { StoreProvider, useStore } from '@/store';
 import { ThemeProvider, useTheme, type Mode, type Palette } from '@/theme';
