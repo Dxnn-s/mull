@@ -51,7 +51,7 @@ page.on('framenavigated', (f) => {
 });
 await page.goto(base + '/');
 await page.waitForTimeout(2500);
-if (!(await page.getByText('Think first.').count())) fail('first run did not reach the tutorial');
+if (!(await page.getByText('You answer a question first.').count())) fail('first run did not reach the tutorial');
 // Expo Router does a few navigations of its own settling in, so the count
 // itself means nothing. A redirect that re-fires never settles, and that is
 // what blanked the screen and remounted the tutorial on every pass, which is
@@ -62,7 +62,7 @@ if (navigations > settled) fail(`redirect loop: still navigating after it settle
 console.log(`step 1 ok, settled after ${settled} navigations`);
 
 for (const [cta, expected] of [
-  ['Go on', 'What a card is.'],
+  ['Go on', 'What it asks you.'],
   ['Makes sense', 'Pick your subjects.'],
 ]) {
   await page.getByText(cta, { exact: true }).click();
@@ -80,19 +80,19 @@ await page.getByText('Physics', { exact: true }).click();
 await page.waitForTimeout(400);
 await page.getByText('Next', { exact: true }).click();
 await page.waitForTimeout(700);
-if (!(await page.getByText('Set the block.').count())) fail('picking a subject did not unlock step four');
+if (!(await page.getByText('Set up the block.').count())) fail('picking a subject did not unlock step four');
 console.log('subject gate ok');
 
 await page.getByText('Start', { exact: true }).click();
 await page.waitForTimeout(1500);
-if (await page.getByText('Think first.').count()) fail('finishing the tutorial bounced back to it');
+if (await page.getByText('You answer a question first.').count()) fail('finishing the tutorial bounced back to it');
 if (!(await page.getByText('SHIELDED TODAY').count())) fail('finishing the tutorial did not land on Today');
 console.log('finish -> Today ok');
 
 // And it must not come back on the next cold start.
 await page.goto(base + '/');
 await page.waitForTimeout(2000);
-if (await page.getByText('Think first.').count()) fail('tutorial showed again after it was finished');
+if (await page.getByText('You answer a question first.').count()) fail('tutorial showed again after it was finished');
 console.log('does not repeat ok');
 
 // The tab title blanks on hydration unless something puts it back.

@@ -34,29 +34,29 @@ export default function Welcome() {
   const steps = [
     {
       eyebrow: 'mull · 1 of 4',
-      title: 'Think first.',
-      body: 'Pick the apps you want to slow down. When you open one, Mull asks you a question first. Get it right and you get fifteen minutes.',
+      title: 'You answer a question first.',
+      body: 'Tap ChatGPT and Mull opens instead. Answer one question about something you are studying, and ChatGPT opens for fifteen minutes.',
       cta: 'Go on',
     },
     {
       eyebrow: 'mull · 2 of 4',
-      title: 'What a card is.',
-      body: 'A short explanation, then two questions. Get both right and you are in. Get one wrong and Mull tells you why, then asks again. Once you pass a topic, it will not come back for a few days.',
+      title: 'What it asks you.',
+      body: 'A few sentences explaining one topic, then two questions about it. Get both right and ChatGPT opens. Get one wrong and Mull shows you the answer and why, then asks two new ones. Pass a topic and it will not come back for a few days.',
       cta: 'Makes sense',
     },
     {
       eyebrow: 'mull · 3 of 4',
       title: 'Pick your subjects.',
-      body: 'Your cards come from these. Pick what you are actually studying.',
+      body: 'The questions come from these. Pick what you are studying right now.',
       cta: chosen.length ? 'Next' : 'Pick at least one',
     },
     {
       eyebrow: 'mull · 4 of 4',
-      title: 'Set the block.',
+      title: 'Set up the block.',
       body:
         Platform.OS === 'web'
-          ? 'On your phone, one Shortcuts automation sends you to Mull when you open ChatGPT. It takes about a minute to set up, once. Blocked apps shows you how.'
-          : 'Choose which apps to shield. Apple’s own picker does the choosing, so Mull never sees your list.',
+          ? 'On your phone, a Shortcuts automation opens Mull whenever you tap ChatGPT. It takes about a minute to set up, once. Blocked apps walks you through it.'
+          : 'Pick which apps to block. Apple’s picker does the choosing, so Mull never sees your list.',
       cta: 'Start',
     },
   ];
@@ -92,7 +92,7 @@ export default function Welcome() {
         <>
           <Rule label="after this" style={{ marginTop: SPACE.xl }} />
           <View style={{ marginTop: SPACE.lg, gap: SPACE.sm }}>
-            {['Start a session from Today.', 'Open a blocked app. Mull catches it.', 'Pass the card. Get your fifteen minutes.'].map((line, i) => (
+            {['Start a session from Today.', 'Tap ChatGPT. Mull opens instead.', 'Answer the questions. ChatGPT opens.'].map((line, i) => (
               <View key={line} style={{ flexDirection: 'row', gap: SPACE.md }}>
                 <T v="label" color={c.accent} style={{ width: 14 }}>
                   {String(i + 1)}

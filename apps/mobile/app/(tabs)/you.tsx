@@ -44,7 +44,7 @@ export default function You() {
 
       <Rule label="motion" style={{ marginTop: SPACE.s32 }} />
       <T v="bodySm" color={c.fgMuted} style={{ marginTop: SPACE.md }}>
-        Live: the seal turns and the dial runs a hand while a session is on. Still: nothing moves.
+        Live: the pattern on the dial turns and a hand sweeps round while a session runs. Still: nothing moves.
       </T>
       <View style={{ flexDirection: 'row', gap: SPACE.sm, marginTop: SPACE.lg, flexWrap: 'wrap' }}>
         <Chip label="live" selected={state.liveSeal} onPress={() => update({ liveSeal: true })} />
@@ -53,7 +53,7 @@ export default function You() {
 
       <Rule label="test" style={{ marginTop: SPACE.s32 }} />
       <T v="bodySm" color={c.fgMuted} style={{ marginTop: SPACE.md }}>
-        Demo mode has real cards for {DEMO_CONCEPTS.length} topics, so you can try the gate without an API key. These buttons put the app into each state.
+        Demo mode has real questions for {DEMO_CONCEPTS.length} topics, so you can try it without an API key. These buttons put the app into each state.
       </T>
       <View style={{ gap: SPACE.sm, marginTop: SPACE.lg }}>
         <SecondaryButton
