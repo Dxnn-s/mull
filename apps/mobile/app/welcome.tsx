@@ -70,7 +70,7 @@ export default function Welcome() {
       lead: Platform.OS === 'web' ? 'One Shortcuts automation, about a minute to set up:' : 'Choose the apps to block:',
       items:
         Platform.OS === 'web'
-          ? ['Open Blocked apps and follow the six steps.', 'After that, tapping ChatGPT opens Mull first.', 'Start a session from Today whenever you sit down to work.']
+          ? ['Open Blocked apps and follow the steps.', 'After that, tapping ChatGPT opens Mull first.', 'Start a session from Today whenever you sit down to work.']
           : ['Apple’s own picker does the choosing, so Mull never sees your list.', 'Blocked apps are shielded whenever a session is running.', 'Start a session from Today whenever you sit down to work.'],
       numbered: true,
       cta: 'Start',

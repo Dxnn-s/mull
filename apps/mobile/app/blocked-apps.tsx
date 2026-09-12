@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Platform, Pressable, ScrollView, View } from 'react-native';
+import { Linking, Platform, Pressable, ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
+import { SHORTCUT_URL, mullUrl } from '@/config';
 import { useStore } from '@/store';
 import { GUTTER, RADIUS, SPACE, useTheme } from '@/theme';
-import { Chip, Rule, SecondaryButton, T, TextButton } from '@/ui';
+import { Chip, PrimaryButton, Rule, SecondaryButton, T, TextButton } from '@/ui';
 
 export default function BlockedApps() {
   const { c } = useTheme();
@@ -27,20 +28,32 @@ export default function BlockedApps() {
  * mechanism iOS gives away for free: a Shortcuts automation that fires when a
  * named app opens and sends them here instead. Soft, and skippable, but so is
  * every blocker; the friction is the product.
+ *
+ * Setup is the weak point, so it is built around a published iCloud Shortcut:
+ * one tap adds it, and nothing has to be typed. Apple will not let anyone share
+ * an Automation, only a Shortcut, so the trigger is still made by hand. Until a
+ * link is published this falls back to the address people have to paste.
  */
 function ShortcutsRecipe() {
   const { c } = useTheme();
   const [copied, setCopied] = useState(false);
-  const url = typeof window !== 'undefined' ? window.location.origin : 'https://mull.school';
+  const url = mullUrl();
+  const linked = SHORTCUT_URL.length > 0;
 
-  const steps: Array<[string, string]> = [
-    ['Open Shortcuts', 'It is on every iPhone. Go to the Automation tab at the bottom.'],
-    ['New automation', 'Tap the plus, then scroll down to App and choose it.'],
-    ['Pick the apps', 'Choose ChatGPT, and add Claude and Gemini to the same automation.'],
-    ['Is Opened', 'Leave that selected. Choose Run Immediately and turn Notify When Run off.'],
-    ['New Blank Automation', 'Then add the action called Open URLs.'],
-    ['Paste the address', 'Use the one below, then tap Done.'],
-  ];
+  const steps: Array<[string, string]> = linked
+    ? [
+        ['Add the shortcut', 'The button above. It saves one called Mull to your phone.'],
+        ['Open Shortcuts, Automation tab', 'Tap the plus at the top right.'],
+        ['Choose App, then your AI apps', 'ChatGPT, Claude and Gemini in the same automation.'],
+        ['Run Immediately', 'Leave Is Opened selected and turn Notify When Run off.'],
+        ['Choose Run Shortcut, pick Mull', 'Tap Done. That is the whole thing.'],
+      ]
+    : [
+        ['Open Shortcuts, Automation tab', 'It is on every iPhone. Tap the plus at the top right.'],
+        ['Choose App, then your AI apps', 'ChatGPT, Claude and Gemini in the same automation.'],
+        ['Run Immediately', 'Leave Is Opened selected and turn Notify When Run off.'],
+        ['Add Open URLs', 'Paste the address below into it, then tap Done.'],
+      ];
 
   return (
     <>
@@ -50,6 +63,10 @@ function ShortcutsRecipe() {
       <T v="body" color={c.fgMuted} style={{ marginTop: SPACE.sm }}>
         Set this up once. After that, tapping ChatGPT opens Mull first, and you answer a question to go on.
       </T>
+
+      {linked && (
+        <PrimaryButton label="Add the Mull shortcut" onPress={() => Linking.openURL(SHORTCUT_URL)} style={{ marginTop: SPACE.xl }} />
+      )}
 
       <Rule label="in shortcuts" style={{ marginTop: SPACE.s32 }} />
       <View style={{ marginTop: SPACE.lg }}>
@@ -68,22 +85,26 @@ function ShortcutsRecipe() {
         ))}
       </View>
 
-      <Rule label="the address" style={{ marginTop: SPACE.s32 }} />
-      <Pressable
-        onPress={async () => {
-          await Clipboard.setStringAsync(url);
-          setCopied(true);
-          setTimeout(() => setCopied(false), 1600);
-        }}
-        style={({ pressed }) => [{ marginTop: SPACE.lg, borderWidth: 1, borderColor: c.border, borderRadius: RADIUS.card, padding: SPACE.lg, backgroundColor: pressed ? c.surface2 : 'transparent' }]}
-      >
-        <T v="bodySm" style={{ fontFamily: 'GeistMono_400Regular' }} numberOfLines={2}>
-          {url}
-        </T>
-        <T v="label" color={c.accent} style={{ marginTop: SPACE.sm }}>
-          {copied ? 'copied' : 'tap to copy'}
-        </T>
-      </Pressable>
+      {!linked && (
+        <>
+          <Rule label="the address" style={{ marginTop: SPACE.s32 }} />
+          <Pressable
+            onPress={async () => {
+              await Clipboard.setStringAsync(url);
+              setCopied(true);
+              setTimeout(() => setCopied(false), 1600);
+            }}
+            style={({ pressed }) => [{ marginTop: SPACE.lg, borderWidth: 1, borderColor: c.border, borderRadius: RADIUS.card, padding: SPACE.lg, backgroundColor: pressed ? c.surface2 : 'transparent' }]}
+          >
+            <T v="bodySm" style={{ fontFamily: 'GeistMono_400Regular' }} numberOfLines={2}>
+              {url}
+            </T>
+            <T v="label" color={c.accent} style={{ marginTop: SPACE.sm }}>
+              {copied ? 'copied' : 'tap to copy'}
+            </T>
+          </Pressable>
+        </>
+      )}
 
       <T v="bodySm" color={c.fgMuted} style={{ marginTop: SPACE.lg }}>
         A Shortcut can be closed and the app reopened, so this is a speed bump rather than a wall. The real shield, the one iOS will not let a web app touch, arrives with the native build.
