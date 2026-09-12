@@ -16,7 +16,7 @@ export default function BlockedApps() {
       <TextButton label="Back" onPress={() => router.back()} align="left" />
       {Platform.OS === 'web' ? <ShortcutsRecipe /> : <NativePicker />}
       <T v="bodySm" color={c.fgMuted} style={{ marginTop: SPACE.xl }}>
-        Mull is never told which apps you picked. On iOS the system hands back a sealed token, and a Shortcut only ever tells Mull that something opened.
+        Mull is never told which apps you picked. iOS hands back a sealed token, and a Shortcut only says that something opened.
       </T>
     </ScrollView>
   );
@@ -48,7 +48,7 @@ function ShortcutsRecipe() {
         Set the block.
       </T>
       <T v="body" color={c.fgMuted} style={{ marginTop: SPACE.sm }}>
-        Six taps, once. After this, opening ChatGPT sends you here instead, and you pass a card to go on.
+        Set this up once. After that, opening ChatGPT sends you here first, and you pass a card to go on.
       </T>
 
       <Rule label="in shortcuts" style={{ marginTop: SPACE.s32 }} />

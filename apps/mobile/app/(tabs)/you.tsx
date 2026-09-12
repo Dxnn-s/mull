@@ -44,7 +44,7 @@ export default function You() {
 
       <Rule label="motion" style={{ marginTop: SPACE.s32 }} />
       <T v="bodySm" color={c.fgMuted} style={{ marginTop: SPACE.md }}>
-        Live turns the seal against itself and runs a sweep hand while a session is on. Still holds the whole face.
+        Live: the seal turns and the dial runs a hand while a session is on. Still: nothing moves.
       </T>
       <View style={{ flexDirection: 'row', gap: SPACE.sm, marginTop: SPACE.lg, flexWrap: 'wrap' }}>
         <Chip label="live" selected={state.liveSeal} onPress={() => update({ liveSeal: true })} />
@@ -53,7 +53,7 @@ export default function You() {
 
       <Rule label="test" style={{ marginTop: SPACE.s32 }} />
       <T v="bodySm" color={c.fgMuted} style={{ marginTop: SPACE.md }}>
-        Demo mode writes real cards for {DEMO_CONCEPTS.length} concepts, so the gate can be judged without a key. These put the app into a state so you can see it.
+        Demo mode has real cards for {DEMO_CONCEPTS.length} topics, so you can try the gate without an API key. These buttons put the app into each state.
       </T>
       <View style={{ gap: SPACE.sm, marginTop: SPACE.lg }}>
         <SecondaryButton
@@ -86,7 +86,7 @@ export default function You() {
 
       <View style={{ height: 1, backgroundColor: c.border, marginTop: SPACE.s40 }} />
       <T v="bodySm" color={c.fgMuted} style={{ marginTop: SPACE.lg }}>
-        Mull never reads what you type into anything. Cards come from the subjects you picked. Nothing leaves this phone except the request for a card.
+        Mull never reads what you type. Cards come from the subjects you picked. Nothing leaves this phone except the request for a card.
       </T>
     </ScrollView>
   );

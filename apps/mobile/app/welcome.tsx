@@ -35,19 +35,19 @@ export default function Welcome() {
     {
       eyebrow: 'mull · 1 of 4',
       title: 'Think first.',
-      body: 'Mull sits in front of the AI apps you pick. When one opens, you answer one short card about something you are studying, and then you get fifteen minutes. The unlock is understanding, not a timer.',
+      body: 'Pick the apps you want to slow down. When you open one, Mull asks you a question first. Get it right and you get fifteen minutes.',
       cta: 'Go on',
     },
     {
       eyebrow: 'mull · 2 of 4',
       title: 'What a card is.',
-      body: 'Three to six plain sentences on one concept, then two questions. Every answer has to be right. Miss one and you get the answer with the reason, new questions, and another go. Pass and the concept is left alone for a few days.',
+      body: 'A short explanation, then two questions. Get both right and you are in. Get one wrong and Mull tells you why, then asks again. Once you pass a topic, it will not come back for a few days.',
       cta: 'Makes sense',
     },
     {
       eyebrow: 'mull · 3 of 4',
       title: 'Pick your subjects.',
-      body: 'Cards come from these. Choose what you are actually studying, otherwise the questions will feel like trivia.',
+      body: 'Your cards come from these. Pick what you are actually studying.',
       cta: chosen.length ? 'Next' : 'Pick at least one',
     },
     {
@@ -55,8 +55,8 @@ export default function Welcome() {
       title: 'Set the block.',
       body:
         Platform.OS === 'web'
-          ? 'On the phone this is a Shortcuts automation: when ChatGPT opens, it sends you here instead. Six taps, once. The Blocked apps screen walks you through it.'
-          : 'Choose which apps to shield. Apple’s own picker does the choosing, so Mull is handed a sealed token and never learns what you picked.',
+          ? 'On your phone, one Shortcuts automation sends you to Mull when you open ChatGPT. It takes about a minute to set up, once. Blocked apps shows you how.'
+          : 'Choose which apps to shield. Apple’s own picker does the choosing, so Mull never sees your list.',
       cta: 'Start',
     },
   ];
@@ -92,7 +92,7 @@ export default function Welcome() {
         <>
           <Rule label="after this" style={{ marginTop: SPACE.xl }} />
           <View style={{ marginTop: SPACE.lg, gap: SPACE.sm }}>
-            {['Start a session from Today.', 'Open a blocked app and Mull catches it.', 'Pass a card, get your fifteen minutes.'].map((line, i) => (
+            {['Start a session from Today.', 'Open a blocked app. Mull catches it.', 'Pass the card. Get your fifteen minutes.'].map((line, i) => (
               <View key={line} style={{ flexDirection: 'row', gap: SPACE.md }}>
                 <T v="label" color={c.accent} style={{ width: 14 }}>
                   {String(i + 1)}

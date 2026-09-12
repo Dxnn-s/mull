@@ -36,7 +36,7 @@ export default function Subjects() {
       <View style={{ marginTop: SPACE.lg }}>
         {ladder.length === 0 ? (
           <T v="bodySm" color={c.fgMuted}>
-            Nothing passed yet. Concepts you pass show up here and come back later, spaced out.
+            Nothing yet. Topics you pass show up here, then come back later to check you still know them.
           </T>
         ) : (
           ladder.map((cpt, i) => (
