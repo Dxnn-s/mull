@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { demoCard } from '@mull/core/demo-cards';
 
 // Fresh localStorage per test, seeded once (not on every navigation, or reloads would wipe what a test just saved).
 test.beforeEach(async ({ page }) => {
@@ -15,8 +16,10 @@ test('lazy prompt is gated, quiz pass yields an answer', async ({ page }) => {
   await page.keyboard.press('Enter');
   await expect(page.getByTestId('gate-explain')).toBeVisible();
   await page.getByRole('button', { name: /read it/i }).click();
-  await page.getByLabel('The correct one').check();
-  await page.getByLabel('When the pieces depend on each other').check();
+  // Demo mode serves the real written card for this concept, so the right
+  // answers come from the card rather than being hardcoded here.
+  const card = demoCard('the chain rule')!;
+  for (const q of card.questions) await page.getByLabel(q.choices[q.answer]!, { exact: true }).check();
   await page.getByRole('button', { name: /check answers/i }).click();
   await expect(page.locator('[data-role="user"]')).toContainText('what is the chain rule');
   await expect(page.locator('[data-role="assistant"]')).toContainText('Demo mode answer');

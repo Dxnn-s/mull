@@ -27,6 +27,7 @@ export { buildRecap, weekStart } from './recap.ts';
 export { needsConsent, CONSENT_TEXT, SUBJECT_CHIPS } from './consent.ts';
 export { chatReply, chatStream, CHAT_SYSTEM } from './chat.ts';
 export { readSse } from './sse.ts';
+export { demoCard, DEMO_CONCEPTS } from './demo-cards.ts';
 export type { ChatMessage } from './chat.ts';
 export { THEME_CSS } from './theme.ts';
 export { PROVIDER_INFO, ANTHROPIC_DEFAULT_MODEL, OPENAI_DEFAULT_MODEL, GEMINI_DEFAULT_MODEL, COST_LINE, AGE_LINE } from './provider-info.ts';

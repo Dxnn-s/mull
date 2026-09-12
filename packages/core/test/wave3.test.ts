@@ -33,10 +33,15 @@ describe('answer key after a miss', () => {
     const before = quiz.state.card.questions.map((q) => q.choices.join('|'));
     const r = session.answer(wrongAnswers(quiz.state.card));
     if (r.state.kind !== 'explain') throw new Error(r.state.kind);
+    // Asserted structurally, not against canned text: demo mode now returns real
+    // written cards, and the shape is what the answer key actually depends on.
     expect(r.state.review).toHaveLength(2);
-    expect(r.state.review[0]).toMatchObject({ correct: 'The correct one', why: expect.stringContaining('first sentence') });
-    expect(r.state.review[0]!.picked).not.toBe('The correct one');
-    expect(r.state.review[1]).toMatchObject({ correct: 'When the pieces depend on each other' });
+    for (const item of r.state.review) {
+      expect(item.correct).toBeTruthy();
+      expect(item.why).toBeTruthy();
+      expect(item.picked).not.toBe(item.correct);
+      expect(quiz.state.kind === 'quiz' && quiz.state.card.questions.some((q) => q.q === item.q)).toBe(true);
+    }
     // Same questions, different order at least once across the card.
     const shown = quiz.state.card;
     const after = r.state.card.questions.map((q) => q.choices.join('|'));

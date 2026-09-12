@@ -21,7 +21,14 @@ export function Grain() {
   const { c } = useTheme();
   return (
     <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-      <Image source={require('../assets/grain.png')} resizeMode="cover" style={[StyleSheet.absoluteFill, { opacity: c.grain }]} />
+      {/* The plate is 128px. react-native-web drops the resizeMode prop on the
+          static export and paints one untouched tile in the corner, so the size
+          goes in the style where both platforms read it. */}
+      <Image
+        source={require('../assets/grain.png')}
+        resizeMode="cover"
+        style={[StyleSheet.absoluteFill, { width: '100%', height: '100%', resizeMode: 'cover', opacity: c.grain }]}
+      />
     </View>
   );
 }

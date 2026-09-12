@@ -5,6 +5,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
+import { demoCard } from '@mull/core/demo-cards';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const EXT = resolve(here, '../dist-test');
@@ -64,12 +65,20 @@ async function open(context: BrowserContext, url: string): Promise<Page> {
 
 const overlay = (page: Page) => page.locator('#mull-host');
 
+
 async function passQuiz(page: Page) {
+  const concept = (await overlay(page).locator('h1').first().textContent())?.trim() ?? '';
   await overlay(page).getByRole('button', { name: /read it/i }).click();
   await expect(overlay(page).locator('form[data-form="quiz"]')).toBeVisible();
-  // The mock card's correct choices carry recognizable text.
-  await overlay(page).getByLabel('The correct one').check();
-  await overlay(page).getByLabel('When the pieces depend on each other').check();
+  // Demo mode has real written cards for some concepts and the generic shape for
+  // the rest, so take the answers from whichever card is actually on screen.
+  const card = demoCard(concept);
+  if (card) {
+    for (const q of card.questions) await overlay(page).getByLabel(q.choices[q.answer]!, { exact: true }).check();
+  } else {
+    await overlay(page).getByLabel('The correct one').check();
+    await overlay(page).getByLabel('When the pieces depend on each other').check();
+  }
   await overlay(page).getByRole('button', { name: /check answers/i }).click();
 }
 

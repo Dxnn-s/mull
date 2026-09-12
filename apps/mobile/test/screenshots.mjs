@@ -49,6 +49,9 @@ for (const [palette, theme] of [['amber', 'light'], ['sage', 'light'], ['amber',
   // cold load because useWindowDimensions reports 0 during static render.
   if (palette === 'amber' && theme === 'light') {
     const cold = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
+    // Mark onboarding done before the first paint, so the cold load lands on
+    // Today and still exercises the dial rather than the tutorial.
+    await cold.addInitScript(() => localStorage.setItem('mull.onboardedAt', String(Date.now())));
     await cold.goto(base + '/');
     await cold.waitForTimeout(2500);
     const widths = await cold.evaluate(() => [...document.querySelectorAll('svg')].map((s) => Math.round(s.getBoundingClientRect().width)));
@@ -69,6 +72,7 @@ for (const [palette, theme] of [['amber', 'light'], ['sage', 'light'], ['amber',
       localStorage.setItem('mull.savedSeconds', '5040');
       localStorage.setItem('mull.unlockMinutes', '15');
       localStorage.setItem('mull.blockedAppCount', '3');
+      localStorage.setItem('mull.onboardedAt', String(Date.now() - 86400000));
       const monday = new Date(); monday.setHours(0,0,0,0); monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
       const ev = (day, hour, outcome, concept) => ({ ts: monday.getTime() + day*86400000 + hour*3600000, site: 'app', verdict: 'LAZY', gated: true, outcome, concept, attempts: 1, ms: 38000 + day*2000 });
       const recent = [
@@ -83,7 +87,7 @@ for (const [palette, theme] of [['amber', 'light'], ['sage', 'light'], ['amber',
     },
     { settings: seedSettings(palette, theme) },
   );
-  for (const path of ['/', '/sessions', '/stats', '/you', '/subjects', '/blocked-apps', '/paywall']) {
+  for (const path of ['/', '/sessions', '/stats', '/you', '/subjects', '/blocked-apps', '/paywall', '/welcome']) {
     await page.goto(base + path);
     await page.waitForTimeout(1500);
     await page.screenshot({ path: resolve(out, `${palette}-${theme}${path === '/' ? '-home' : path.replace('/', '-')}.png`) });

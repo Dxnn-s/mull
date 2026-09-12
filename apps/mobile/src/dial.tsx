@@ -17,6 +17,8 @@ export interface DialProps {
   a11y: string;
   /** Drives the engraving. Same record always draws the same figure. */
   seal: Seal;
+  /** Off makes the face completely still. Settings → motion. */
+  live?: boolean;
 }
 
 const TICKS = 60;
@@ -28,8 +30,10 @@ const AnimatedLine = Animated.createAnimatedComponent(Line);
  * an instrument. Inside sits the guilloché, which carries the record. The middle
  * stays clear paper so the numerals have somewhere quiet to sit.
  */
-export function Dial({ state, progress, label, value, a11y, seal }: DialProps) {
-  const { c, reduceMotion } = useTheme();
+export function Dial({ state, progress, label, value, a11y, seal, live = true }: DialProps) {
+  const { c, reduceMotion: prefersStill } = useTheme();
+  // One switch for both the accessibility preference and the settings toggle.
+  const reduceMotion = prefersStill || !live;
   const { width: windowWidth } = useWindowDimensions();
   // useWindowDimensions reports 0 on the first paint of a statically rendered
   // page, which collapsed the whole dial to 0x0 on a cold load. onLayout gives
@@ -49,6 +53,26 @@ export function Dial({ state, progress, label, value, a11y, seal }: DialProps) {
 
   const engraving = state === 'unlocked' || state === 'milestone' ? c.accent : c.fg;
   const engravingOpacity = state === 'resting' ? 0.28 : state === 'hard' ? 0.32 : 0.45;
+
+  // The sweep hand. A bezel tells you where you are; a hand tells you the thing
+  // is running. One rotation a minute, the rate of a real seconds hand, and it
+  // is the only element that moves on its own.
+  const hand = useRef(new Animated.Value(0)).current;
+  const running = state === 'active' || state === 'unlocked';
+  useEffect(() => {
+    hand.stopAnimation();
+    if (!running || reduceMotion) {
+      hand.setValue(0);
+      return;
+    }
+    // Start where a real seconds hand would be, so it never jumps on mount.
+    hand.setValue((Date.now() % 60_000) / 60_000);
+    const loop = Animated.loop(
+      Animated.timing(hand, { toValue: 1, duration: 60_000, easing: Easing.linear, useNativeDriver: true }),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [running, reduceMotion, hand]);
 
   // One earned motion: the marks sweep on when the dial changes state.
   const sweep = useRef(new Animated.Value(1)).current;
@@ -93,6 +117,7 @@ export function Dial({ state, progress, label, value, a11y, seal }: DialProps) {
         driftPerMinute={state === 'active' || state === 'unlocked' ? 6 : 0}
         reduceMotion={reduceMotion}
         austere={state === 'hard'}
+        moire={live && (state === 'active' || state === 'unlocked' || state === 'milestone')}
       />
 
       <Svg width={box} height={box} style={{ position: 'absolute' }}>
@@ -114,6 +139,21 @@ export function Dial({ state, progress, label, value, a11y, seal }: DialProps) {
         {(state === 'hard' || state === 'unlocked') && <Circle cx={cx} cy={cy} r={outer - 20} stroke={c.border} strokeWidth={1} fill="none" />}
         {state === 'milestone' && <Circle cx={cx} cy={cy} r={outer - 1} stroke={c.accentBorder} strokeWidth={1} fill="none" />}
       </Svg>
+
+      {running && !reduceMotion && (
+        <Animated.View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            width: 1.5,
+            height: outer - 18,
+            backgroundColor: state === 'unlocked' ? c.accent : c.fg,
+            opacity: 0.5,
+            top: box / 2 - (outer - 18),
+            transform: [{ translateY: (outer - 18) / 2 }, { rotate: hand.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] }) }, { translateY: -(outer - 18) / 2 }],
+          }}
+        />
+      )}
 
       <View style={{ alignItems: 'center', gap: SPACE.xs, backgroundColor: c.bg, paddingHorizontal: SPACE.md, paddingVertical: SPACE.sm, borderRadius: 999 }}>
         {label ? (

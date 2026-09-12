@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { Stack } from 'expo-router';
+import { Redirect, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 // Per-weight subpaths on purpose. Importing from a font package's root pulls
 // every weight and italic it ships: geist-mono alone added thirty 102KB files
@@ -45,9 +45,14 @@ function Themed({ children }: { children: React.ReactNode }) {
 
 function Routes() {
   const { c } = useTheme();
+  const { state, ready } = useStore();
+  // Wait for storage before deciding, or a returning user gets the tutorial
+  // again for a frame on every cold start.
+  if (ready && !state.onboardedAt) return <Redirect href="/welcome" />;
   return (
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: c.bg }, animation: 'fade' }}>
       <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="welcome" options={{ animation: 'none' }} />
       <Stack.Screen name="unlock" options={{ presentation: 'fullScreenModal', gestureEnabled: false }} />
       <Stack.Screen name="paywall" options={{ presentation: 'fullScreenModal' }} />
       <Stack.Screen name="blocked-apps" />

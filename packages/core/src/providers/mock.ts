@@ -1,4 +1,5 @@
 import type { CompletionRequest, Provider } from '../types.ts';
+import { demoCard } from '../demo-cards.ts';
 
 /**
  * Deterministic stand-in for tests and for the web app's "try it without a key" mode.
@@ -70,6 +71,9 @@ function classifyByKeyword(user: string): string {
 
 function fixedCard(user: string): string {
   const concept = user.match(/Concept to teach: (.*)/)?.[1]?.trim() ?? 'the concept';
+  // Real written card when we have one, so demo mode can be judged on its merits.
+  const real = demoCard(concept);
+  if (real) return JSON.stringify(real);
   return JSON.stringify({
     concept,
     explanation: `${concept} is the idea under your question. Here is the shape of it in plain words. It shows up whenever the pieces depend on each other. A concrete example: a different case than yours, worked the same way. Once you see the pattern, the answer is the easy part.`,

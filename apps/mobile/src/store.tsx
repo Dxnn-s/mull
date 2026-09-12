@@ -30,7 +30,11 @@ export interface AppState {
   /** Seconds saved: sum of shielded session time. */
   savedSeconds: number;
   /** Dev toggle: force a dial state on Today. */
+  /** Live engraving: the seal counter-turns and the dial runs a sweep hand. */
+  liveSeal: boolean;
   devDial: string | null;
+  /** When the tutorial was finished or skipped. Null means show it. */
+  onboardedAt: number | null;
 }
 
 const KEYS: Record<keyof AppState, string> = {
@@ -42,7 +46,9 @@ const KEYS: Record<keyof AppState, string> = {
   blockedAppCount: 'mull.blockedAppCount',
   unlockMinutes: 'mull.unlockMinutes',
   savedSeconds: 'mull.savedSeconds',
+  liveSeal: 'mull.liveSeal',
   devDial: 'mull.devDial',
+  onboardedAt: 'mull.onboardedAt',
 };
 
 export const DEFAULT_APP_STATE: AppState = {
@@ -54,7 +60,9 @@ export const DEFAULT_APP_STATE: AppState = {
   blockedAppCount: 0,
   unlockMinutes: 15,
   savedSeconds: 0,
+  liveSeal: true,
   devDial: null,
+  onboardedAt: null,
 };
 
 async function load(): Promise<AppState> {
@@ -80,7 +88,9 @@ async function load(): Promise<AppState> {
     blockedAppCount: (raw[KEYS.blockedAppCount] as number) ?? 0,
     unlockMinutes: (raw[KEYS.unlockMinutes] as number) ?? 15,
     savedSeconds: (raw[KEYS.savedSeconds] as number) ?? 0,
+    liveSeal: (raw[KEYS.liveSeal] as boolean) ?? true,
     devDial: (raw[KEYS.devDial] as string | null) ?? null,
+    onboardedAt: (raw[KEYS.onboardedAt] as number | null) ?? null,
   };
 }
 

@@ -94,6 +94,7 @@ export default function Today() {
           label={label}
           value={value}
           seal={{ concepts: listConcepts(state.memory).length, streak: state.stats.streak }}
+          live={state.liveSeal}
           a11y={session ? `Session active, ${value} left.` : hard ? `Hard mode, ${until}.` : 'No session.'}
         />
       </View>
