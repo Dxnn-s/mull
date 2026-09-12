@@ -1,9 +1,23 @@
 # Loop state · mull-build
 
 ## Last run
+2026-09-11 (session 4). LIVE as a PWA: https://mull-dxnn-s-projects.vercel.app · repo https://github.com/Dxnn-s/mull · auto-deploys on push to master.
+
+## Earlier
 2026-09-08 (session 2). Wave 3 shipped from `Brain/projects/mull/ideas-2026-09-08.md` (the ranked plan: 10 findings, 35 ideas, integrations table, build order). Session 1 (2026-09-06) reached v2.
 
 ## In progress
+- Session B (Screen Time module) still gated on the Apple Developer enrolment. Everything else that does not need Apple is done.
+
+## Done in session 4 (2026-09-10/11)
+- Paper-and-ink redesign, light by default. Orb replaced by a tick-mark dial. One accent, no glow, no cyan, print radii, editorial layout, label-only tabs.
+- Guilloché seal as the signature visual: `src/guilloche.ts` draws one engraved spiral whose figure comes from the record (lobes from concepts, depth from streak). Fills the dial, stamps the Record page, and is the icon set in a bolder small-size cut.
+- PWA: manifest, service worker, apple-touch-icon, Add to Home Screen hint, and the Shortcuts recipe on the web build's blocked-apps screen.
+- Shipped: pushed to GitHub (first backup this project has ever had), linked Vercel on the dxnn-s team with rootDirectory apps/mobile, disabled SSO protection so the URL is public.
+- Fixed three deploy-only failures: Vercel ran no build at all (needed an explicit vercel.json for a pnpm workspace); routes 404'd (cleanUrls); and the dial rendered 0x0 on a cold load.
+- Bundle: dropped 30 unused font faces (35 ttf -> 5) and shrank the grain plate. Web export 4.8MB -> 2.9MB.
+
+## Old in progress
 - PIVOT 2026-09-08 evening: Dennis wants the app, not the extension ("hard to market and monetize"; "heavy inspo from Opal"). Product = iPhone app that shields the AI apps the user picks (Screen Time API) with a subject quiz as the unlock. Plan: `Brain/projects/mull/app-plan.md`. Design spec DONE: `Brain/projects/mull/design/mobile-spec.md` (483 lines: tokens, orb states, seven screens, nav, shield text, a11y, do-nots).
 - Session A (in progress, after a crash mid-install): `apps/mobile` Expo SDK 57 + expo-router, `.npmrc node-linker=hoisted` for the workspace, metro watches the root. Written: theme provider with all four token sets and Dynamic Type caps, AsyncStorage store (core shapes + session/unlock/saved), quiz wrapper (per-subject concept bank, pickConcept with memory, makeCard via core, gradeCard with review + reshuffle), Orb (halo/core/ring layers, six states, breathe/pulse, reduced motion), UI kit, and routes: (tabs) home/sessions/stats/you, unlock modal (loading/explain/quiz/missed/blocked), subjects, blocked-apps placeholder, paywall layout. Session A DONE (commit 'mobile: Expo app scaffold'): tsc clean, 5 vitest on the quiz wrapper, `expo export --platform ios` bundles 3.3 MB hbc. Not yet run on a phone (no Expo Go run yet; needs Dennis's iPhone + `pnpm --filter @mull/mobile start`). Next: Session B = Screen Time module (kingstinct/react-native-device-activity, custom dev client via EAS, entitlement request the same day), Session C = quiz server + RevenueCat paywall.
 - Wave 3 tail landed: answer-leak guard, pre-classifier, upgrade test; plus schedule/recap/consent/health in core (79 vitest). Extension UI for those (dead-key, health probe, first-run, study hours, recap) is PAUSED pending Dennis's call on whether the extension stays as a companion.
@@ -33,6 +47,10 @@
 Sign in with Claude, Codex/ChatGPT OAuth, Google sign-in, a Mull-hosted tier (held), fetch-level blocking, Safari, native iOS, district channel, Socratic chat drift, confidence sliders, MutationObserver on body, auto-importing subjects, extra permissions.
 
 ## Lessons learned (write here, not in chat)
+- The screenshot harness seeded localStorage then navigated a SECOND time, so every shot was a warm load. That hid a dial that collapsed to 0x0 on a genuine first paint, and it only surfaced on the live site. `useWindowDimensions` returns 0 during static render; measure with onLayout instead. The harness now shoots a cold load first and fails if any svg comes back 0 wide.
+- Vercel auto-detects nothing useful for an Expo app in a pnpm workspace: the first deploy ran no build at all (25ms, no install) and served only `public/`, so every route 404'd but the manifest still resolved, which made it look half-working. With rootDirectory set to a subfolder it never looks at the workspace root, so the install command has to point there by hand.
+- New Vercel projects default to SSO protection on all deployment URLs, which returns the login page with HTTP 200. Checking status codes alone says the site is fine; check the body.
+- Importing from a font package's root pulls every weight and italic it ships. Use the per-weight subpath.
 - A fixture written from the selector file proves the selectors match the fixture, not the site. Save real composer subtrees as fixtures.
 - Test assertions like "no prompt text in the row" must not grep for words that legitimately appear in the concept name. Assert the key set instead.
 - Haiku 4.5 rejects `output_config.effort` and adaptive thinking. Any model default change on Anthropic needs the params branch or it 400s.
