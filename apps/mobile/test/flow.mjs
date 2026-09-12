@@ -95,6 +95,11 @@ await page.waitForTimeout(2000);
 if (await page.getByText('Think first.').count()) fail('tutorial showed again after it was finished');
 console.log('does not repeat ok');
 
+// The tab title blanks on hydration unless something puts it back.
+const title = await page.title();
+if (title !== 'Mull') fail(`tab title is ${JSON.stringify(title)}, expected "Mull"`);
+console.log('tab title ok');
+
 await browser.close();
 server.close();
 console.log('flow ok');

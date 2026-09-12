@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { Redirect, Stack, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 // Per-weight subpaths on purpose. Importing from a font package's root pulls
@@ -10,7 +10,7 @@ import { SpaceGrotesk_400Regular } from '@expo-google-fonts/space-grotesk/400Reg
 import { SpaceGrotesk_500Medium } from '@expo-google-fonts/space-grotesk/500Medium';
 import { GeistMono_400Regular } from '@expo-google-fonts/geist-mono/400Regular';
 import { GeistMono_500Medium } from '@expo-google-fonts/geist-mono/500Medium';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { StoreProvider, useStore } from '@/store';
 import { ThemeProvider, useTheme, type Mode, type Palette } from '@/theme';
 import { Grain } from '@/ui';
@@ -54,12 +54,18 @@ function Routes() {
   // again, and remounted the tutorial back on step one every time.
   const needsTutorial = ready && !state.onboardedAt && pathname !== '/welcome';
 
-  // React Navigation writes document.title from screenOptions on the web, and
-  // an unset title blanks the tab the moment the app hydrates. The header is
-  // hidden everywhere, so this only ever shows up in the browser tab.
+  // The static export ships <title>Mull</title>, but expo-router turns off
+  // React Navigation's document title and writes nothing of its own, so the
+  // browser tab goes blank the moment the app hydrates. Nothing else is
+  // competing for it, so setting it on each route change is enough. An
+  // installed PWA takes its name from the manifest and never sees this.
+  useEffect(() => {
+    if (Platform.OS === 'web' && typeof document !== 'undefined') document.title = 'Mull';
+  }, [pathname]);
+
   return (
     <>
-      <Stack screenOptions={{ headerShown: false, title: 'Mull', contentStyle: { backgroundColor: c.bg }, animation: 'fade' }}>
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: c.bg }, animation: 'fade' }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="welcome" options={{ animation: 'none' }} />
         <Stack.Screen name="unlock" options={{ presentation: 'fullScreenModal', gestureEnabled: false }} />
