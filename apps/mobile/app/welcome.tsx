@@ -40,7 +40,7 @@ export default function Welcome() {
       eyebrow: 'mull · 1 of 4',
       title: 'You answer a question first.',
       lead: 'Every time you reach for ChatGPT:',
-      items: ['You tap ChatGPT.', 'Mull opens instead.', 'You answer one question about something you are studying.', 'ChatGPT opens for fifteen minutes.'],
+      items: ['Tap ChatGPT, and Mull opens instead.', 'Answer one question about what you are studying.', 'ChatGPT opens for fifteen minutes.'],
       numbered: true,
       cta: 'Go on',
     },
@@ -50,8 +50,8 @@ export default function Welcome() {
       lead: 'A few sentences on one topic, then two questions about it.',
       items: [
         'Both right and ChatGPT opens.',
-        'One wrong and Mull shows you the answer and why, then asks two new ones.',
-        'Pass a topic and it will not come back for a few days.',
+        'One wrong and Mull shows the answer and why, then asks two new ones.',
+        'Pass a topic and it rests for a few days.',
       ],
       numbered: false,
       cta: 'Makes sense',
@@ -132,18 +132,9 @@ export default function Welcome() {
 function List({ items, numbered }: { items: string[]; numbered: boolean }) {
   const { c } = useTheme();
   return (
-    <View style={{ marginTop: SPACE.lg }}>
+    <View style={{ marginTop: SPACE.lg, gap: SPACE.md }}>
       {items.map((line, i) => (
-        <View
-          key={line}
-          style={{
-            flexDirection: 'row',
-            gap: SPACE.md,
-            paddingVertical: SPACE.md,
-            borderTopWidth: i === 0 ? 0 : 1,
-            borderTopColor: c.border,
-          }}
-        >
+        <View key={line} style={{ flexDirection: 'row', gap: SPACE.md }}>
           {numbered ? (
             <T v="label" color={c.accent} style={{ width: 16 }}>
               {String(i + 1)}
@@ -151,7 +142,7 @@ function List({ items, numbered }: { items: string[]; numbered: boolean }) {
           ) : (
             // A middle dot at label size is nearly invisible on paper. A small
             // filled square sits on the same grid as the numerals and reads.
-            <View style={{ width: 16, paddingTop: 9 }}>
+            <View style={{ width: 16, paddingTop: 8 }}>
               <View style={{ width: 5, height: 5, backgroundColor: c.accent }} />
             </View>
           )}
