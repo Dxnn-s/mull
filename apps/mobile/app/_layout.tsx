@@ -50,7 +50,10 @@ function Routes() {
   // again for a frame on every cold start.
   if (ready && !state.onboardedAt) return <Redirect href="/welcome" />;
   return (
-    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: c.bg }, animation: 'fade' }}>
+    // React Navigation writes document.title from screenOptions on the web, and
+    // an unset title blanks the tab the moment the app hydrates. The header is
+    // hidden everywhere, so this only ever shows up in the browser tab.
+    <Stack screenOptions={{ headerShown: false, title: 'Mull', contentStyle: { backgroundColor: c.bg }, animation: 'fade' }}>
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="welcome" options={{ animation: 'none' }} />
       <Stack.Screen name="unlock" options={{ presentation: 'fullScreenModal', gestureEnabled: false }} />
