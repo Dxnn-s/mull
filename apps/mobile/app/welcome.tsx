@@ -6,13 +6,17 @@ import { SUBJECT_CHIPS } from '@mull/core/consent';
 import { Rosette } from '@/rosette';
 import { useStore } from '@/store';
 import { GUTTER, SPACE, useTheme } from '@/theme';
-import { Chip, PrimaryButton, Rule, T, TextButton } from '@/ui';
+import { Chip, PrimaryButton, T, TextButton } from '@/ui';
 
 /**
  * The tutorial. Shows itself once on a fresh install and is replayable from You,
  * so it is a screen rather than a one-shot. Four steps, each doing exactly one
  * thing, and the subject step actually writes settings rather than describing
  * them: an onboarding that only talks is an onboarding people skip.
+ *
+ * Every step is one short line and then a list. The first draft wrote each step
+ * as a paragraph, which nobody reads standing in front of a tutorial, and the
+ * first step is a sequence of events anyway, so it should look like one.
  */
 export default function Welcome() {
   const { state, update } = useStore();
@@ -29,34 +33,46 @@ export default function Welcome() {
     router.replace('/');
   }
 
-  const pad = { paddingTop: insets.top + SPACE.xl, paddingHorizontal: GUTTER, paddingBottom: insets.bottom + SPACE.s32 };
+  const pad = { paddingTop: insets.top + SPACE.lg, paddingHorizontal: GUTTER, paddingBottom: insets.bottom + SPACE.s32 };
 
   const steps = [
     {
       eyebrow: 'mull · 1 of 4',
       title: 'You answer a question first.',
-      body: 'Tap ChatGPT and Mull opens instead. Answer one question about something you are studying, and ChatGPT opens for fifteen minutes.',
+      lead: 'Every time you reach for ChatGPT:',
+      items: ['You tap ChatGPT.', 'Mull opens instead.', 'You answer one question about something you are studying.', 'ChatGPT opens for fifteen minutes.'],
+      numbered: true,
       cta: 'Go on',
     },
     {
       eyebrow: 'mull · 2 of 4',
       title: 'What it asks you.',
-      body: 'A few sentences explaining one topic, then two questions about it. Get both right and ChatGPT opens. Get one wrong and Mull shows you the answer and why, then asks two new ones. Pass a topic and it will not come back for a few days.',
+      lead: 'A few sentences on one topic, then two questions about it.',
+      items: [
+        'Both right and ChatGPT opens.',
+        'One wrong and Mull shows you the answer and why, then asks two new ones.',
+        'Pass a topic and it will not come back for a few days.',
+      ],
+      numbered: false,
       cta: 'Makes sense',
     },
     {
       eyebrow: 'mull · 3 of 4',
       title: 'Pick your subjects.',
-      body: 'The questions come from these. Pick what you are studying right now.',
+      lead: 'The questions come from these. Pick what you are studying right now.',
+      items: [],
+      numbered: false,
       cta: chosen.length ? 'Next' : 'Pick at least one',
     },
     {
       eyebrow: 'mull · 4 of 4',
       title: 'Set up the block.',
-      body:
+      lead: Platform.OS === 'web' ? 'One Shortcuts automation, about a minute to set up:' : 'Choose the apps to block:',
+      items:
         Platform.OS === 'web'
-          ? 'On your phone, a Shortcuts automation opens Mull whenever you tap ChatGPT. It takes about a minute to set up, once. Blocked apps walks you through it.'
-          : 'Pick which apps to block. Apple’s picker does the choosing, so Mull never sees your list.',
+          ? ['Open Blocked apps and follow the six steps.', 'After that, tapping ChatGPT opens Mull first.', 'Start a session from Today whenever you sit down to work.']
+          : ['Apple’s own picker does the choosing, so Mull never sees your list.', 'Blocked apps are shielded whenever a session is running.', 'Start a session from Today whenever you sit down to work.'],
+      numbered: true,
       cta: 'Start',
     },
   ];
@@ -66,19 +82,21 @@ export default function Welcome() {
 
   return (
     <ScrollView style={{ flex: 1 }} contentContainerStyle={pad}>
-      <View style={{ alignItems: 'center', height: 150, justifyContent: 'center' }}>
-        <Rosette size={150} innerRatio={0.3} outerRatio={0.9} seal={{ concepts: step * 4, streak: step * 2 }} stroke={c.fg} strokeWidth={0.55} opacity={0.4} driftPerMinute={0} />
+      <View style={{ alignItems: 'center', height: 120, justifyContent: 'center' }}>
+        <Rosette size={120} innerRatio={0.3} outerRatio={0.9} seal={{ concepts: step * 4, streak: step * 2 }} stroke={c.fg} strokeWidth={0.55} opacity={0.4} driftPerMinute={0} />
       </View>
 
-      <T v="label" color={c.accent} style={{ marginTop: SPACE.xl }}>
+      <T v="label" color={c.accent} style={{ marginTop: SPACE.lg }}>
         {s.eyebrow}
       </T>
       <T v="display" style={{ marginTop: SPACE.md }}>
         {s.title}
       </T>
       <T v="body" color={c.fgMuted} style={{ marginTop: SPACE.md }}>
-        {s.body}
+        {s.lead}
       </T>
+
+      {s.items.length > 0 && <List items={s.items} numbered={s.numbered} />}
 
       {step === 2 && (
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.sm, marginTop: SPACE.xl }}>
@@ -86,24 +104,6 @@ export default function Welcome() {
             <Chip key={x} label={x} selected={chosen.includes(x)} onPress={() => toggle(x)} />
           ))}
         </View>
-      )}
-
-      {step === 3 && (
-        <>
-          <Rule label="after this" style={{ marginTop: SPACE.xl }} />
-          <View style={{ marginTop: SPACE.lg, gap: SPACE.sm }}>
-            {['Start a session from Today.', 'Tap ChatGPT. Mull opens instead.', 'Answer the questions. ChatGPT opens.'].map((line, i) => (
-              <View key={line} style={{ flexDirection: 'row', gap: SPACE.md }}>
-                <T v="label" color={c.accent} style={{ width: 14 }}>
-                  {String(i + 1)}
-                </T>
-                <T v="bodySm" color={c.fgMuted} style={{ flex: 1 }}>
-                  {line}
-                </T>
-              </View>
-            ))}
-          </View>
-        </>
       )}
 
       <PrimaryButton label={s.cta} disabled={!canAdvance} onPress={() => (step === steps.length - 1 ? finish() : setStep(step + 1))} style={{ marginTop: SPACE.s32 }} />
@@ -121,5 +121,45 @@ export default function Welcome() {
         ))}
       </View>
     </ScrollView>
+  );
+}
+
+/**
+ * Numbered when the lines happen in order, marked when they are just facts.
+ * Hairlines between rows rather than around them, which is how every other list
+ * in the app is drawn.
+ */
+function List({ items, numbered }: { items: string[]; numbered: boolean }) {
+  const { c } = useTheme();
+  return (
+    <View style={{ marginTop: SPACE.lg }}>
+      {items.map((line, i) => (
+        <View
+          key={line}
+          style={{
+            flexDirection: 'row',
+            gap: SPACE.md,
+            paddingVertical: SPACE.md,
+            borderTopWidth: i === 0 ? 0 : 1,
+            borderTopColor: c.border,
+          }}
+        >
+          {numbered ? (
+            <T v="label" color={c.accent} style={{ width: 16 }}>
+              {String(i + 1)}
+            </T>
+          ) : (
+            // A middle dot at label size is nearly invisible on paper. A small
+            // filled square sits on the same grid as the numerals and reads.
+            <View style={{ width: 16, paddingTop: 9 }}>
+              <View style={{ width: 5, height: 5, backgroundColor: c.accent }} />
+            </View>
+          )}
+          <T v="body" style={{ flex: 1 }}>
+            {line}
+          </T>
+        </View>
+      ))}
+    </View>
   );
 }
