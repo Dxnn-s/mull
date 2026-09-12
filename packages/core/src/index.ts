@@ -30,8 +30,10 @@ export { readSse } from './sse.ts';
 export { demoCard, DEMO_CONCEPTS } from './demo-cards.ts';
 export type { ChatMessage } from './chat.ts';
 export { THEME_CSS } from './theme.ts';
-export { PROVIDER_INFO, ANTHROPIC_DEFAULT_MODEL, OPENAI_DEFAULT_MODEL, GEMINI_DEFAULT_MODEL, COST_LINE, AGE_LINE } from './provider-info.ts';
+export { PROVIDER_INFO, ANTHROPIC_DEFAULT_MODEL, OPENAI_DEFAULT_MODEL, GEMINI_DEFAULT_MODEL, OPENROUTER_DEFAULT_MODEL, COST_LINE, AGE_LINE } from './provider-info.ts';
+export { createVerifier, challengeFor, authorizeUrl, exchangeCode, codeFromCallback } from './oauth.ts';
 export { MockProvider } from './providers/mock.ts';
+export { OpenRouterProvider } from './providers/openrouter.ts';
 export { AnthropicProvider } from './providers/anthropic.ts';
 export { OpenAIProvider } from './providers/openai.ts';
 export { GeminiProvider } from './providers/gemini.ts';
@@ -42,6 +44,7 @@ import { AnthropicProvider } from './providers/anthropic.ts';
 import { OpenAIProvider } from './providers/openai.ts';
 import { GeminiProvider } from './providers/gemini.ts';
 import { MockProvider } from './providers/mock.ts';
+import { OpenRouterProvider } from './providers/openrouter.ts';
 
 /** Build the provider the settings describe. Throws when a key is required and missing. */
 export function createProvider(settings: Pick<Settings, 'provider' | 'apiKey' | 'model'>, fetchImpl?: typeof fetch): Provider {
@@ -50,6 +53,8 @@ export function createProvider(settings: Pick<Settings, 'provider' | 'apiKey' | 
     throw new Error(`No API key set for ${PROVIDER_INFO[settings.provider].label}. Open Mull settings.`);
   }
   switch (settings.provider) {
+    case 'openrouter':
+      return new OpenRouterProvider(settings.apiKey.trim(), model, fetchImpl);
     case 'anthropic':
       return new AnthropicProvider(settings.apiKey.trim(), model, fetchImpl ? { fetch: fetchImpl } : {});
     case 'openai':

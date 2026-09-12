@@ -4,9 +4,12 @@ import type { Settings } from './types.ts';
  * Defaults are the cheapest model that handles a 60-token JSON classification
  * and a short lesson. About $0.0003 per gated prompt on the OpenAI and Gemini
  * defaults, about $0.004 on Haiku. Users can override the model in settings.
- * Key order here is the order the provider picker shows: OpenAI first because
- * it is the only provider whose terms allow users under 18.
+ * Key order here is the order the provider picker shows. OpenRouter leads
+ * because it is the only one you can sign into rather than paste a key for, and
+ * it fronts the other three. OpenAI next, because it is the only provider whose
+ * own terms allow users under 18.
  */
+export const OPENROUTER_DEFAULT_MODEL = 'openai/gpt-5-nano';
 export const OPENAI_DEFAULT_MODEL = 'gpt-5-nano';
 export const GEMINI_DEFAULT_MODEL = 'gemini-2.5-flash-lite';
 export const ANTHROPIC_DEFAULT_MODEL = 'claude-haiku-4-5';
@@ -15,6 +18,13 @@ export const COST_LINE = 'About $0.0003 per gate on the default model. $1 lasts 
 export const AGE_LINE = 'Under 18? OpenAI is the only provider whose terms allow it.';
 
 export const PROVIDER_INFO: Record<Settings['provider'], { label: string; defaultModel: string; keyHint: string; models: string[]; note: string }> = {
+  openrouter: {
+    label: 'OpenRouter',
+    defaultModel: OPENROUTER_DEFAULT_MODEL,
+    keyHint: 'sk-or-...',
+    models: ['openai/gpt-5-nano', 'openai/gpt-5-mini', 'google/gemini-2.5-flash-lite', 'anthropic/claude-haiku-4.5'],
+    note: 'Sign in instead of pasting a key. Bills your own OpenRouter credit.',
+  },
   openai: {
     label: 'OpenAI',
     defaultModel: OPENAI_DEFAULT_MODEL,

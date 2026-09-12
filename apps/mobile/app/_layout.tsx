@@ -72,6 +72,7 @@ function Routes() {
         <Stack.Screen name="paywall" options={{ presentation: 'fullScreenModal' }} />
         <Stack.Screen name="blocked-apps" />
         <Stack.Screen name="subjects" />
+        <Stack.Screen name="provider" />
       </Stack>
       {needsTutorial ? (
         <>

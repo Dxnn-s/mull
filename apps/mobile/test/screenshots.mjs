@@ -87,7 +87,7 @@ for (const [palette, theme] of [['amber', 'light'], ['sage', 'light'], ['amber',
     },
     { settings: seedSettings(palette, theme) },
   );
-  for (const path of ['/', '/sessions', '/stats', '/you', '/subjects', '/blocked-apps', '/paywall', '/welcome']) {
+  for (const path of ['/', '/sessions', '/stats', '/you', '/subjects', '/blocked-apps', '/paywall', '/welcome', '/provider']) {
     await page.goto(base + path);
     await page.waitForTimeout(1500);
     await page.screenshot({ path: resolve(out, `${palette}-${theme}${path === '/' ? '-home' : path.replace('/', '-')}.png`) });

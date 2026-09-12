@@ -37,7 +37,7 @@ export interface ReviewItem {
   why?: string;
 }
 
-export type ProviderId = 'openai' | 'gemini' | 'anthropic' | 'mock';
+export type ProviderId = 'openrouter' | 'openai' | 'gemini' | 'anthropic' | 'mock';
 
 export interface CompletionRequest {
   system: string;

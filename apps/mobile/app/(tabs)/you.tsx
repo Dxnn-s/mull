@@ -3,6 +3,7 @@ import { Pressable, ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DEMO_CONCEPTS } from '@mull/core/demo-cards';
+import { PROVIDER_INFO } from '@mull/core/provider-info';
 import { useStore } from '@/store';
 import { EMPTY_STATS } from '@mull/core/stats';
 import { GUTTER, SPACE, useTheme } from '@/theme';
@@ -21,6 +22,7 @@ export default function You() {
       <T v="display">You.</T>
 
       <View style={{ marginTop: SPACE.s32 }}>
+        <NavRow label="AI provider" value={state.settings.provider === 'mock' ? 'Demo cards' : PROVIDER_INFO[state.settings.provider].label} onPress={() => router.push('/provider')} />
         <NavRow label="Subjects" value={state.settings.subjects.join(', ') || 'None picked'} onPress={() => router.push('/subjects')} />
         <NavRow label="Blocked apps" value={state.blockedAppCount ? `${state.blockedAppCount} apps` : 'None picked'} onPress={() => router.push('/blocked-apps')} />
         <NavRow label="Plans" value="Free" onPress={() => router.push('/paywall')} />
