@@ -38,7 +38,10 @@ export default function Unlock() {
       setPhase({ kind: 'blocked', until: state.block.until, review: [] });
       return;
     }
-    const pick = pickConcept(state.settings.subjects, state.memory, state.settings.conceptMemoryDays);
+    // With no AI account linked, stay inside the written bank so the gate still
+    // works rather than failing at the provider.
+    const unlinked = state.settings.provider === 'mock' || !state.settings.apiKey.trim();
+    const pick = pickConcept(state.settings.subjects, state.memory, state.settings.conceptMemoryDays, Date.now(), unlinked);
     if (!pick) {
       setPhase({ kind: 'error', message: 'Pick at least one subject first.' });
       return;

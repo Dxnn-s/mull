@@ -22,7 +22,7 @@ export default function You() {
       <T v="display">You.</T>
 
       <View style={{ marginTop: SPACE.s32 }}>
-        <NavRow label="AI provider" value={state.settings.provider === 'mock' ? 'Demo cards' : PROVIDER_INFO[state.settings.provider].label} onPress={() => router.push('/provider')} />
+        <NavRow label="AI provider" value={state.settings.provider === 'mock' ? 'Built in cards' : PROVIDER_INFO[state.settings.provider].label} onPress={() => router.push('/provider')} />
         <NavRow label="Subjects" value={state.settings.subjects.join(', ') || 'None picked'} onPress={() => router.push('/subjects')} />
         <NavRow label="Blocked apps" value={state.blockedAppCount ? `${state.blockedAppCount} apps` : 'None picked'} onPress={() => router.push('/blocked-apps')} />
         <NavRow label="Plans" value="Free" onPress={() => router.push('/paywall')} />
@@ -55,7 +55,7 @@ export default function You() {
 
       <Rule label="test" style={{ marginTop: SPACE.s32 }} />
       <T v="bodySm" color={c.fgMuted} style={{ marginTop: SPACE.md }}>
-        Demo mode has real questions for {DEMO_CONCEPTS.length} topics, so you can try it without an API key. These buttons put the app into each state.
+        Mull ships with {DEMO_CONCEPTS.length} written cards, so the gate works with nothing linked. These buttons put the app into each state.
       </T>
       <View style={{ gap: SPACE.sm, marginTop: SPACE.lg }}>
         <SecondaryButton

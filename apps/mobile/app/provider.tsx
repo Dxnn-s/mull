@@ -3,7 +3,7 @@ import { ActivityIndicator, Linking, Platform, ScrollView, TextInput, View } fro
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
-import { PROVIDER_INFO, authorizeUrl, challengeFor, codeFromCallback, createVerifier, exchangeCode } from '@mull/core';
+import { BANK_SUBJECTS, CARDS, PROVIDER_INFO, authorizeUrl, challengeFor, codeFromCallback, createVerifier, exchangeCode } from '@mull/core';
 import type { ProviderId } from '@mull/core';
 import { mullUrl } from '@/config';
 import { useStore } from '@/store';
@@ -100,15 +100,15 @@ export default function ProviderScreen() {
         Link your AI.
       </T>
       <T v="body" color={c.fgMuted} style={{ marginTop: SPACE.sm }}>
-        Mull writes your cards with your own AI account, so the cost is yours and it is tiny. There is no Mull account to make.
+        Mull already has written cards for every subject, so it works with nothing linked. Link an AI account only if you want cards on topics the bank has not covered yet.
       </T>
 
       <View style={{ marginTop: SPACE.xl, borderWidth: 1, borderColor: connected ? c.accentBorder : c.border, backgroundColor: connected ? c.accentSoft : 'transparent', borderRadius: RADIUS.card, padding: SPACE.lg }}>
         <T v="label" color={connected ? c.accent : c.fgMuted}>
-          {connected ? 'connected' : 'not connected'}
+          {connected ? 'linked' : 'built in cards'}
         </T>
         <T v="body" style={{ marginTop: SPACE.xs }}>
-          {connected ? `${PROVIDER_INFO[current.provider].label}, key ending ${current.apiKey.slice(-4)}` : 'Running on demo cards.'}
+          {connected ? `${PROVIDER_INFO[current.provider].label}, key ending ${current.apiKey.slice(-4)}` : `${CARDS.length} written cards across ${BANK_SUBJECTS.length} subjects. Nothing to set up.`}
         </T>
       </View>
 
@@ -118,7 +118,7 @@ export default function ProviderScreen() {
         </T>
       )}
 
-      <Rule label="one tap" style={{ marginTop: SPACE.s32 }} />
+      <Rule label="optional, one tap" style={{ marginTop: SPACE.s32 }} />
       <T v="bodySm" color={c.fgMuted} style={{ marginTop: SPACE.md }}>
         OpenRouter is the only one you can sign into. It reaches OpenAI, Anthropic and Google models with one login, and you top it up like a gift card.
       </T>

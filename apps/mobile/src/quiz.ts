@@ -1,5 +1,6 @@
 import { buildGateCard, grade, shuffleChoices } from '@mull/core/gate';
 import { createProvider } from '@mull/core';
+import { CARDS, demoCard } from '@mull/core/cards';
 import { isRemembered, listConcepts } from '@mull/core/stats';
 import type { ConceptMemory, GateCard, ReviewItem, Settings } from '@mull/core/types';
 
@@ -22,10 +23,24 @@ export const CONCEPT_BANK: Record<string, string[]> = {
   Writing: ['thesis statements', 'topic sentences', 'active vs passive voice', 'the Oxford comma', 'MLA in-text citations', 'counterarguments', 'transitions', 'parallel structure'],
 };
 
-export function pickConcept(subjects: string[], memory: ConceptMemory, memoryDays: number, seed = Date.now()): { subject: string; concept: string } | null {
+/** Concepts the bank has a written card for, so they need no provider at all. */
+const WRITTEN = new Set(CARDS.map((c) => c.concept.toLowerCase()));
+
+/**
+ * `writtenOnly` keeps the pick inside the shipped bank. That is the default
+ * when no AI account is linked, which is how the app works out of the box
+ * rather than sitting there demanding a key.
+ */
+export function pickConcept(subjects: string[], memory: ConceptMemory, memoryDays: number, seed = Date.now(), writtenOnly = false): { subject: string; concept: string } | null {
   const active = subjects.filter((s) => CONCEPT_BANK[s]?.length);
   if (!active.length) return null;
-  const all = active.flatMap((subject) => CONCEPT_BANK[subject]!.map((concept) => ({ subject, concept })));
+  let all = active.flatMap((subject) => CONCEPT_BANK[subject]!.map((concept) => ({ subject, concept })));
+  if (writtenOnly) {
+    const written = all.filter((c) => WRITTEN.has(c.concept.toLowerCase()));
+    // Only narrow if something survives, or picking a subject with no written
+    // card yet would hand back nothing at all.
+    if (written.length) all = written;
+  }
   const fresh = all.filter((c) => !isRemembered(memory, c.concept, memoryDays));
   const pool = fresh.length ? fresh : all;
   // Least-recently-passed first, then a seeded pick among the least seen.
@@ -36,6 +51,12 @@ export function pickConcept(subjects: string[], memory: ConceptMemory, memoryDay
 }
 
 export async function makeCard(settings: Settings, subject: string, concept: string): Promise<GateCard> {
+  // The bank answers first. These are written to the same rules the model gets,
+  // so a written card is not a downgrade, and it costs nothing and arrives with
+  // no network at all.
+  const written = demoCard(concept);
+  if (written) return shuffleChoices(written, Date.now());
+
   const provider = createProvider(settings);
   const card = await buildGateCard(`Teach me ${concept} for ${subject}.`, concept, subject, settings.questionsPerGate, provider, 30_000);
   return shuffleChoices(card, Date.now());
