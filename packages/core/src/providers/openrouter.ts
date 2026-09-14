@@ -44,6 +44,7 @@ export class OpenRouterProvider implements Provider {
   }
 
   private async request(req: CompletionRequest, stream: boolean, json: boolean): Promise<Response> {
+    const model = this.model || OPENROUTER_DEFAULT_MODEL;
     const res = await fetchWithTimeout(
       this.fetchImpl,
       'https://openrouter.ai/api/v1/chat/completions',
@@ -51,10 +52,13 @@ export class OpenRouterProvider implements Provider {
         method: 'POST',
         headers: { 'content-type': 'application/json', authorization: `Bearer ${this.apiKey}` },
         body: JSON.stringify({
-          model: this.model || OPENROUTER_DEFAULT_MODEL,
+          model,
           max_tokens: req.maxTokens ?? 800,
           stream,
-          ...(json ? { response_format: { type: 'json_object' } } : {}),
+          // Free open models mostly do not implement response_format and 400 on
+          // it. extractJson already pulls the object out of whatever comes
+          // back, so only ask the models that actually support it.
+          ...(json && !model.endsWith(':free') ? { response_format: { type: 'json_object' } } : {}),
           messages: [
             { role: 'system', content: req.system },
             { role: 'user', content: req.user },

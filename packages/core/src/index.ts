@@ -31,7 +31,7 @@ export { demoCard, DEMO_CONCEPTS, CARDS, BANK_SUBJECTS, pickCard } from './cards
 export type { BankCard } from './cards.ts';
 export type { ChatMessage } from './chat.ts';
 export { THEME_CSS } from './theme.ts';
-export { PROVIDER_INFO, ANTHROPIC_DEFAULT_MODEL, OPENAI_DEFAULT_MODEL, GEMINI_DEFAULT_MODEL, OPENROUTER_DEFAULT_MODEL, COST_LINE, AGE_LINE } from './provider-info.ts';
+export { PROVIDER_INFO, ANTHROPIC_DEFAULT_MODEL, OPENAI_DEFAULT_MODEL, GEMINI_DEFAULT_MODEL, OPENROUTER_DEFAULT_MODEL, FREE_MODELS, isFreeModel, COST_LINE, AGE_LINE } from './provider-info.ts';
 export { createVerifier, challengeFor, authorizeUrl, exchangeCode, codeFromCallback } from './oauth.ts';
 export { MockProvider } from './providers/mock.ts';
 export { OpenRouterProvider } from './providers/openrouter.ts';

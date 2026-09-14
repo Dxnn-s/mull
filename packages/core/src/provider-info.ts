@@ -9,7 +9,25 @@ import type { Settings } from './types.ts';
  * it fronts the other three. OpenAI next, because it is the only provider whose
  * own terms allow users under 18.
  */
-export const OPENROUTER_DEFAULT_MODEL = 'openai/gpt-5-nano';
+/**
+ * Free by default. OpenRouter's :free variants cost nothing and are capped at
+ * 20 requests a minute and 50 a day, which is far more gates than anyone opens,
+ * and the shipped card bank covers the common topics anyway. So signing in
+ * costs the user nothing at all unless they choose a paid model.
+ */
+export const OPENROUTER_DEFAULT_MODEL = 'google/gemma-4-31b-it:free';
+
+/** Open models that cost nothing to run. Order is the order the picker shows. */
+export const FREE_MODELS = [
+  'google/gemma-4-31b-it:free',
+  'nvidia/nemotron-3-super-120b-a12b:free',
+  'thinkingmachines/inkling:free',
+  'liquid/lfm-2.5-2.6b:free',
+];
+
+/** A model that bills nothing, so the UI can say so without guessing. */
+export const isFreeModel = (model: string): boolean => model.endsWith(':free');
+
 export const OPENAI_DEFAULT_MODEL = 'gpt-5-nano';
 export const GEMINI_DEFAULT_MODEL = 'gemini-2.5-flash-lite';
 export const ANTHROPIC_DEFAULT_MODEL = 'claude-haiku-4-5';
@@ -22,8 +40,8 @@ export const PROVIDER_INFO: Record<Settings['provider'], { label: string; defaul
     label: 'OpenRouter',
     defaultModel: OPENROUTER_DEFAULT_MODEL,
     keyHint: 'sk-or-...',
-    models: ['openai/gpt-5-nano', 'openai/gpt-5-mini', 'google/gemini-2.5-flash-lite', 'anthropic/claude-haiku-4.5'],
-    note: 'Sign in instead of pasting a key. Bills your own OpenRouter credit.',
+    models: [...FREE_MODELS, 'openai/gpt-5-nano', 'openai/gpt-5-mini', 'anthropic/claude-haiku-4.5'],
+    note: 'Sign in instead of pasting a key. Defaults to a free open model, so it costs nothing.',
   },
   openai: {
     label: 'OpenAI',

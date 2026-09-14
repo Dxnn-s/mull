@@ -3,7 +3,7 @@ import { ActivityIndicator, Linking, Platform, ScrollView, TextInput, View } fro
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
-import { BANK_SUBJECTS, CARDS, PROVIDER_INFO, authorizeUrl, challengeFor, codeFromCallback, createVerifier, exchangeCode } from '@mull/core';
+import { BANK_SUBJECTS, CARDS, PROVIDER_INFO, authorizeUrl, challengeFor, codeFromCallback, createVerifier, exchangeCode, isFreeModel } from '@mull/core';
 import type { ProviderId } from '@mull/core';
 import { mullUrl } from '@/config';
 import { useStore } from '@/store';
@@ -120,7 +120,7 @@ export default function ProviderScreen() {
 
       <Rule label="optional, one tap" style={{ marginTop: SPACE.s32 }} />
       <T v="bodySm" color={c.fgMuted} style={{ marginTop: SPACE.md }}>
-        OpenRouter is the only one you can sign into. It reaches OpenAI, Anthropic and Google models with one login, and you top it up like a gift card.
+        OpenRouter is the only one you can sign into. It defaults to a free open model, so signing in costs nothing: no card, no credit, capped at 50 cards a day, which is far more than anyone opens.
       </T>
       {busy ? (
         <View style={{ marginTop: SPACE.lg, flexDirection: 'row', alignItems: 'center', gap: SPACE.md }}>
@@ -131,6 +131,27 @@ export default function ProviderScreen() {
         </View>
       ) : (
         <PrimaryButton label="Sign in with OpenRouter" onPress={connectOpenRouter} style={{ marginTop: SPACE.lg }} />
+      )}
+
+      {current.provider === 'openrouter' && (
+        <>
+          <Rule label="model" style={{ marginTop: SPACE.s32 }} />
+          <T v="bodySm" color={c.fgMuted} style={{ marginTop: SPACE.md }}>
+            {isFreeModel(current.model || PROVIDER_INFO.openrouter.defaultModel)
+              ? 'Free and open. Costs nothing, a little slower, and rate limited.'
+              : 'Paid. Faster and sharper, billed to your OpenRouter credit at about a third of a cent per card.'}
+          </T>
+          <View style={{ flexDirection: 'row', gap: SPACE.sm, marginTop: SPACE.lg, flexWrap: 'wrap' }}>
+            {PROVIDER_INFO.openrouter.models.map((m) => (
+              <Chip
+                key={m}
+                label={`${m.split('/').pop()!.replace(':free', '')}${isFreeModel(m) ? ' · free' : ''}`}
+                selected={(current.model || PROVIDER_INFO.openrouter.defaultModel) === m}
+                onPress={() => update({ settings: { ...current, model: m } })}
+              />
+            ))}
+          </View>
+        </>
       )}
 
       <Rule label="or paste a key" style={{ marginTop: SPACE.s32 }} />

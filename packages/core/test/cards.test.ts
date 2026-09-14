@@ -17,7 +17,7 @@ describe('card bank', () => {
 
   it('every card survives the same validation a model reply gets', () => {
     for (const card of CARDS) {
-      expect(() => normalizeGateCard(JSON.parse(JSON.stringify(card))), card.concept).not.toThrow();
+      expect(() => normalizeGateCard(JSON.parse(JSON.stringify(card)), card.concept, card.questions.length), card.concept).not.toThrow();
     }
   });
 
