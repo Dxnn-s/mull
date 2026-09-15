@@ -42,7 +42,8 @@
     "shots": "node test/screenshots.mjs ../../.tmp-web",
     "icons": "node test/icons.mjs",
     "seal": "node test/rosette-sheet.mjs",
-    "test:flow": "expo export --platform web --output-dir dist-web && node test/flow.mjs dist-web"
+    "test:flow": "npm run export:web && node test/flow.mjs dist-web",
+    "export:web": "expo export --platform web --output-dir dist-web && node test/stamp-sw.mjs dist-web"
   },
   "private": true
 }

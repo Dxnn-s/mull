@@ -23,31 +23,52 @@ export const CONCEPT_BANK: Record<string, string[]> = {
   Writing: ['thesis statements', 'topic sentences', 'active vs passive voice', 'the Oxford comma', 'MLA in-text citations', 'counterarguments', 'transitions', 'parallel structure'],
 };
 
-/** Concepts the bank has a written card for, so they need no provider at all. */
-const WRITTEN = new Set(CARDS.map((c) => c.concept.toLowerCase()));
+/**
+ * The written cards, grouped by the subject they belong to. Derived from the
+ * bank rather than listed again here: the first version kept a separate list of
+ * concept names and matched it to the bank by string, the names drifted, and
+ * Chemistry and History silently ended up with no reachable card at all.
+ */
+const WRITTEN_BY_SUBJECT: Record<string, string[]> = {};
+for (const card of CARDS) (WRITTEN_BY_SUBJECT[card.subject] ??= []).push(card.concept);
+
+/** Subjects that can be taught with no provider at all. */
+export const WRITTEN_SUBJECTS = Object.keys(WRITTEN_BY_SUBJECT);
 
 /**
- * `writtenOnly` keeps the pick inside the shipped bank. That is the default
- * when no AI account is linked, which is how the app works out of the box
- * rather than sitting there demanding a key.
+ * `writtenOnly` keeps the pick inside the shipped bank, which is the default
+ * when no AI account is linked. It narrows per subject rather than across the
+ * whole pool, so a Calculus plus Chemistry user still gets asked about
+ * Chemistry, and it drops a subject with no written card instead of quietly
+ * handing back a concept nothing can teach.
  */
 export function pickConcept(subjects: string[], memory: ConceptMemory, memoryDays: number, seed = Date.now(), writtenOnly = false): { subject: string; concept: string } | null {
-  const active = subjects.filter((s) => CONCEPT_BANK[s]?.length);
-  if (!active.length) return null;
-  let all = active.flatMap((subject) => CONCEPT_BANK[subject]!.map((concept) => ({ subject, concept })));
-  if (writtenOnly) {
-    const written = all.filter((c) => WRITTEN.has(c.concept.toLowerCase()));
-    // Only narrow if something survives, or picking a subject with no written
-    // card yet would hand back nothing at all.
-    if (written.length) all = written;
-  }
-  const fresh = all.filter((c) => !isRemembered(memory, c.concept, memoryDays));
-  const pool = fresh.length ? fresh : all;
-  // Least-recently-passed first, then a seeded pick among the least seen.
+  const perSubject = subjects
+    .map((subject) => {
+      const names = writtenOnly ? (WRITTEN_BY_SUBJECT[subject] ?? []) : (CONCEPT_BANK[subject] ?? []);
+      return { subject, names };
+    })
+    .filter((s) => s.names.length);
+  if (!perSubject.length) return null;
+
+  // Take the freshest concept each subject can offer, then choose between
+  // subjects. Flattening first let a subject with more concepts crowd out one
+  // with fewer, which is how mixed subjects starved.
   const passed = new Map(listConcepts(memory).map((c) => [c.concept, c.passedAt] as const));
-  pool.sort((a, b) => (passed.get(a.concept.toLowerCase()) ?? 0) - (passed.get(b.concept.toLowerCase()) ?? 0));
-  const slice = pool.slice(0, Math.max(1, Math.min(4, pool.length)));
-  return slice[Math.abs(seed) % slice.length] ?? null;
+  const best = perSubject.map(({ subject, names }) => {
+    const all = names.map((concept) => ({ subject, concept }));
+    const fresh = all.filter((c) => !isRemembered(memory, c.concept, memoryDays));
+    const pool = fresh.length ? fresh : all;
+    pool.sort((a, b) => (passed.get(a.concept.toLowerCase()) ?? 0) - (passed.get(b.concept.toLowerCase()) ?? 0));
+    return { pick: pool[0]!, fresh: fresh.length > 0, seen: passed.get(pool[0]!.concept.toLowerCase()) ?? 0 };
+  });
+
+  // Prefer a subject that still has something unseen, oldest first.
+  const withFresh = best.filter((b) => b.fresh);
+  const from = withFresh.length ? withFresh : best;
+  from.sort((a, b) => a.seen - b.seen);
+  const slice = from.slice(0, Math.max(1, Math.min(4, from.length)));
+  return slice[Math.abs(seed) % slice.length]?.pick ?? null;
 }
 
 export async function makeCard(settings: Settings, subject: string, concept: string): Promise<GateCard> {
@@ -56,6 +77,13 @@ export async function makeCard(settings: Settings, subject: string, concept: str
   // no network at all.
   const written = demoCard(concept);
   if (written) return shuffleChoices(written, Date.now());
+
+  // The mock provider answers with a placeholder whose choices read "The
+  // correct one" and "A silly one". That is fine in a test and humiliating in
+  // front of a user, so it never stands in for a real card.
+  if (settings.provider === 'mock' || !settings.apiKey.trim()) {
+    throw new Error(`No card written for ${concept} yet. Pick another subject, or link an AI account to write one.`);
+  }
 
   const provider = createProvider(settings);
   const card = await buildGateCard(`Teach me ${concept} for ${subject}.`, concept, subject, settings.questionsPerGate, provider, 30_000);
