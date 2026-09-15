@@ -30,6 +30,11 @@ export interface AppState {
   /** Seconds saved: sum of shielded session time. */
   savedSeconds: number;
   /** Dev toggle: force a dial state on Today. */
+  /**
+   * 'ask' is the original product: say what you were about to ask and the card
+   * teaches that. 'subject' asks about anything you study and needs no typing.
+   */
+  gateMode: 'ask' | 'subject';
   /** Live engraving: the seal counter-turns and the dial runs a sweep hand. */
   liveSeal: boolean;
   devDial: string | null;
@@ -46,6 +51,7 @@ const KEYS: Record<keyof AppState, string> = {
   blockedAppCount: 'mull.blockedAppCount',
   unlockMinutes: 'mull.unlockMinutes',
   savedSeconds: 'mull.savedSeconds',
+  gateMode: 'mull.gateMode',
   liveSeal: 'mull.liveSeal',
   devDial: 'mull.devDial',
   onboardedAt: 'mull.onboardedAt',
@@ -60,6 +66,7 @@ export const DEFAULT_APP_STATE: AppState = {
   blockedAppCount: 0,
   unlockMinutes: 15,
   savedSeconds: 0,
+  gateMode: 'ask',
   liveSeal: true,
   devDial: null,
   onboardedAt: null,
@@ -88,6 +95,7 @@ async function load(): Promise<AppState> {
     blockedAppCount: (raw[KEYS.blockedAppCount] as number) ?? 0,
     unlockMinutes: (raw[KEYS.unlockMinutes] as number) ?? 15,
     savedSeconds: (raw[KEYS.savedSeconds] as number) ?? 0,
+    gateMode: (raw[KEYS.gateMode] as 'ask' | 'subject') ?? 'ask',
     liveSeal: (raw[KEYS.liveSeal] as boolean) ?? true,
     devDial: (raw[KEYS.devDial] as string | null) ?? null,
     onboardedAt: (raw[KEYS.onboardedAt] as number | null) ?? null,

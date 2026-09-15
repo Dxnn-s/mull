@@ -27,7 +27,7 @@ export { buildRecap, weekStart } from './recap.ts';
 export { needsConsent, CONSENT_TEXT, SUBJECT_CHIPS } from './consent.ts';
 export { chatReply, chatStream, CHAT_SYSTEM } from './chat.ts';
 export { readSse } from './sse.ts';
-export { demoCard, DEMO_CONCEPTS, CARDS, BANK_SUBJECTS, pickCard } from './cards.ts';
+export { demoCard, DEMO_CONCEPTS, CARDS, BANK_SUBJECTS, pickCard, matchConcept } from './cards.ts';
 export type { BankCard } from './cards.ts';
 export type { ChatMessage } from './chat.ts';
 export { THEME_CSS } from './theme.ts';

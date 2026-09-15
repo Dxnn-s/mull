@@ -29,6 +29,17 @@ export default function You() {
         <NavRow label="Tutorial" value="Replay" onPress={() => router.push('/welcome')} last />
       </View>
 
+      <Rule label="what the gate asks" style={{ marginTop: SPACE.s32 }} />
+      <T v="bodySm" color={c.fgMuted} style={{ marginTop: SPACE.md }}>
+        {state.gateMode === 'ask'
+          ? 'Ask: type what you were about to ask and the card teaches that. Real work goes straight through.'
+          : 'Study: a card from your subjects, no typing. It will not be about what you were going to ask.'}
+      </T>
+      <View style={{ flexDirection: 'row', gap: SPACE.sm, marginTop: SPACE.lg, flexWrap: 'wrap' }}>
+        <Chip label="ask" selected={state.gateMode === 'ask'} onPress={() => update({ gateMode: 'ask' })} />
+        <Chip label="study" selected={state.gateMode === 'subject'} onPress={() => update({ gateMode: 'subject' })} />
+      </View>
+
       <Rule label="unlock window" style={{ marginTop: SPACE.s32 }} />
       <View style={{ flexDirection: 'row', gap: SPACE.sm, marginTop: SPACE.lg, flexWrap: 'wrap' }}>
         {[10, 15, 30].map((m) => (

@@ -1,17 +1,23 @@
 import React, { useEffect, useState } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { Pressable, ScrollView, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Clipboard from 'expo-clipboard';
 import * as Haptics from 'expo-haptics';
 import { isHardModeNow } from '@mull/core/schedule';
 import { applyEvent, rememberPass } from '@mull/core/stats';
 import type { GateCard, ReviewItem } from '@mull/core/types';
 import { gradeCard, makeCard, pickConcept, formatClock } from '@/quiz';
+import { matchConcept } from '@mull/core/cards';
+import { preClassify } from '@mull/core/pre-classify';
+import { shuffleChoices } from '@mull/core/gate';
 import { useStore } from '@/store';
 import { GUTTER, RADIUS, SPACE, useTheme } from '@/theme';
 import { PrimaryButton, Rule, SecondaryButton, T, TextButton } from '@/ui';
 
 type Phase =
+  | { kind: 'ask' }
+  | { kind: 'released'; reason: string; prompt: string }
   | { kind: 'loading'; subject: string; concept: string }
   | { kind: 'explain'; card: GateCard; subject: string; attempts: number; review: ReviewItem[] }
   | { kind: 'quiz'; card: GateCard; subject: string; attempts: number }
@@ -33,11 +39,21 @@ export default function Unlock() {
   const [answers, setAnswers] = useState<Array<number | null>>([]);
   const [qi, setQi] = useState(0);
 
+  // Ask mode opens with the question box. Subject mode goes straight to a card.
   useEffect(() => {
     if (state.block && state.block.until > Date.now()) {
       setPhase({ kind: 'blocked', until: state.block.until, review: [] });
       return;
     }
+    if (state.gateMode === 'ask') {
+      setPhase({ kind: 'ask' });
+      return;
+    }
+    startSubjectCard();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function startSubjectCard() {
     // With no AI account linked, stay inside the written bank so the gate still
     // works rather than failing at the provider.
     const unlinked = state.settings.provider === 'mock' || !state.settings.apiKey.trim();
@@ -53,8 +69,41 @@ export default function Unlock() {
         setPhase({ kind: 'explain', card, subject: pick.subject, attempts: 0, review: [] });
       })
       .catch((err) => setPhase({ kind: 'error', message: err instanceof Error ? err.message : String(err) }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }
+
+  /**
+   * What ask mode does with the question, cheapest route first.
+   *
+   * Real work goes straight through, free and offline: preClassify already
+   * recognises a code block, a pasted draft, a long prompt. That escape hatch is
+   * what keeps the gate from punishing the work it is supposed to protect.
+   *
+   * Then the bank, matched by name, so a question about a topic we have written
+   * is taught with no model and no cost. Only after both miss does it fall back
+   * to a card from the subjects, which is subject mode's behaviour and always
+   * works. A linked account writes a card on the exact concept instead.
+   */
+  function submitQuestion(text: string) {
+    const prompt = text.trim();
+    if (!prompt) return;
+
+    const effort = preClassify(prompt);
+    if (effort) {
+      setPhase({ kind: 'released', reason: effort, prompt });
+      update({ stats: applyEvent(state.stats, { ts: Date.now(), site: 'app', verdict: 'LEGIT', gated: false, outcome: 'released', attempts: 0, ms: Date.now() - shownAt }) });
+      return;
+    }
+
+    const match = matchConcept(prompt);
+    if (match) {
+      const card = shuffleChoices(match, Date.now());
+      setAnswers(card.questions.map(() => null));
+      setPhase({ kind: 'explain', card, subject: match.subject, attempts: 0, review: [] });
+      return;
+    }
+
+    startSubjectCard();
+  }
 
   function record(outcome: 'passed' | 'failed' | 'skipped' | 'cancelled' | 'blocked', concept?: string, attempts?: number) {
     return applyEvent(state.stats, { ts: Date.now(), site: 'app', verdict: 'LAZY', gated: true, outcome, concept, attempts, ms: Date.now() - shownAt });
@@ -135,6 +184,10 @@ export default function Unlock() {
   }
 
   if (phase.kind === 'blocked') return <Blocked until={phase.until} review={phase.review} onClose={() => router.back()} />;
+
+  if (phase.kind === 'ask') return <Ask onSubmit={submitQuestion} onCancel={cancel} />;
+
+  if (phase.kind === 'released') return <Released reason={phase.reason} prompt={phase.prompt} onClose={() => router.back()} />;
 
   if (phase.kind === 'explain') {
     const missed = phase.review.length > 0;
@@ -269,5 +322,86 @@ function Blocked({ until, review, onClose }: { until: number; review: ReviewItem
       {review.length > 0 && <AnswerKey items={review} />}
       <SecondaryButton label="Close" onPress={onClose} style={{ marginTop: SPACE.s32 }} />
     </ScrollView>
+  );
+}
+
+/**
+ * The question box. This is the original product: Mull is supposed to teach the
+ * thing you were about to ask, and on a phone the only way to know that is to
+ * ask. It is not extra typing, it is the same typing moved, so the text is
+ * handed onward afterwards rather than thrown away.
+ */
+function Ask({ onSubmit, onCancel }: { onSubmit(text: string): void; onCancel(): void }) {
+  const { c } = useTheme();
+  const insets = useSafeAreaInsets();
+  const [text, setText] = useState('');
+  return (
+    <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingTop: insets.top + SPACE.xl, paddingHorizontal: GUTTER, paddingBottom: SPACE.s40 }}>
+      <T v="label" color={c.accent}>
+        mull · unlock
+      </T>
+      <T v="title" style={{ marginTop: SPACE.xl }}>
+        What were you about to ask?
+      </T>
+      <T v="bodySm" color={c.fgMuted} style={{ marginTop: SPACE.sm }}>
+        Type it here instead. Real work goes straight through. A question you could answer yourself gets a card first.
+      </T>
+      <TextInput
+        value={text}
+        onChangeText={setText}
+        placeholder="e.g. what is the chain rule"
+        placeholderTextColor={c.fgFaint}
+        multiline
+        autoFocus
+        style={{
+          marginTop: SPACE.xl,
+          minHeight: 120,
+          borderWidth: 1,
+          borderColor: c.border,
+          borderRadius: RADIUS.card,
+          padding: SPACE.lg,
+          color: c.fg,
+          fontFamily: 'SpaceGrotesk_400Regular',
+          fontSize: 16,
+          lineHeight: 24,
+          textAlignVertical: 'top',
+        }}
+      />
+      <PrimaryButton label="Continue" disabled={!text.trim()} onPress={() => onSubmit(text)} style={{ marginTop: SPACE.lg }} />
+      <TextButton label="Cancel" onPress={onCancel} align="right" />
+    </ScrollView>
+  );
+}
+
+/**
+ * Released without a card. Worth its own screen rather than a silent pass,
+ * because being told your work counted as work is the moment the gate stops
+ * feeling arbitrary.
+ */
+function Released({ reason, prompt, onClose }: { reason: string; prompt: string; onClose(): void }) {
+  const { c } = useTheme();
+  const insets = useSafeAreaInsets();
+  const [copied, setCopied] = useState(false);
+  return (
+    <View style={{ flex: 1, paddingTop: insets.top + SPACE.xl, paddingHorizontal: GUTTER }}>
+      <T v="label" color={c.accent}>
+        mull · no card needed
+      </T>
+      <T v="title" style={{ marginTop: SPACE.xl }}>
+        That is real work.
+      </T>
+      <T v="body" color={c.fgMuted} style={{ marginTop: SPACE.sm }}>
+        {`Let through without a card: ${reason.replace('effort shown: ', '')}. Mull only stops the questions you could answer yourself.`}
+      </T>
+      <PrimaryButton
+        label={copied ? 'Copied, go ahead' : 'Copy my question'}
+        onPress={async () => {
+          await Clipboard.setStringAsync(prompt);
+          setCopied(true);
+        }}
+        style={{ marginTop: SPACE.s32 }}
+      />
+      <TextButton label="Close" onPress={onClose} align="right" />
+    </View>
   );
 }

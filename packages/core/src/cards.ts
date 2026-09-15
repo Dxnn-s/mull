@@ -462,3 +462,55 @@ export function pickCard(subjects: string[], seen: Record<string, unknown> = {})
   const from = fresh.length ? fresh : pool;
   return from[Math.floor(Math.random() * from.length)] ?? null;
 }
+
+/** Words too common to identify a concept by. */
+const STOP = new Set([
+  'the','a','an','and','or','of','to','in','is','are','was','were','what','whats','how','why','when','which','who','do','does','did',
+  'can','could','would','should','i','me','my','you','your','it','its','this','that','for','with','on','at','from','by','be','been',
+  'explain','tell','help','about','mean','means','meaning','work','works','difference','between','vs','versus','define','definition',
+]);
+
+/** Crude singular/plural fold, so "p-value" reaches "p-values". */
+const stem = (w: string): string => (w.length > 3 && w.endsWith('s') && !w.endsWith('ss') ? w.slice(0, -1) : w);
+
+const words = (s: string): string[] =>
+  s
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter((w) => w && !STOP.has(w))
+    .map(stem);
+
+/**
+ * Find a written card for whatever the user was about to ask, with no model.
+ *
+ * A lot of low-effort questions are the common topics by name: "what is the
+ * chain rule", "explain osmosis", "ser vs estar". Matching those against the
+ * bank means the original product, teaching the concept they actually asked
+ * about, works with nothing linked and nothing spent.
+ *
+ * Deliberately strict. A wrong card is worse than no card, because the whole
+ * promise is that the lesson is about the thing you asked.
+ */
+export function matchConcept(text: string): BankCard | null {
+  const asked = text.toLowerCase();
+  const askedWords = new Set(words(text));
+  if (!askedWords.size) return null;
+
+  let best: { card: BankCard; score: number } | null = null;
+  for (const card of BANK) {
+    const name = card.concept.toLowerCase();
+    // The concept named outright wins, and beats any keyword overlap.
+    let score = asked.includes(name) ? 100 + name.length : 0;
+    if (!score) {
+      const key = words(card.concept);
+      if (!key.length) continue;
+      const hit = key.filter((w) => askedWords.has(w)).length;
+      // Every distinctive word of the concept has to be there. "the chain rule"
+      // needs both "chain" and "rule", so "rule of thirds" cannot match it.
+      if (hit === key.length) score = 10 + hit;
+    }
+    if (score && (!best || score > best.score)) best = { card, score };
+  }
+  return best?.card ?? null;
+}

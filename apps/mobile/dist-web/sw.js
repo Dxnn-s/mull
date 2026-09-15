@@ -14,7 +14,7 @@
  * at export time, which names the cache and also guarantees this file differs
  * every release, so the update check has something to find.
  */
-const BUILD = 'a9b0d8c23a00';
+const BUILD = '36efd749ac2d';
 const CACHE = `mull-${BUILD}`;
 const SHELL = ['/', '/manifest.json', '/apple-touch-icon.png', '/icon-192.png'];
 
