@@ -7,7 +7,7 @@ import * as Haptics from 'expo-haptics';
 import { isHardModeNow } from '@mull/core/schedule';
 import { applyEvent, rememberPass } from '@mull/core/stats';
 import type { GateCard, ReviewItem } from '@mull/core/types';
-import { gradeCard, makeCard, pickConcept, formatClock } from '@/quiz';
+import { gradeCard, isLinked, makeCard, makeCardForQuestion, pickConcept, formatClock } from '@/quiz';
 import { matchConcept } from '@mull/core/cards';
 import { preClassify } from '@mull/core/pre-classify';
 import { shuffleChoices } from '@mull/core/gate';
@@ -38,6 +38,8 @@ export default function Unlock() {
   const [shownAt] = useState(Date.now());
   const [answers, setAnswers] = useState<Array<number | null>>([]);
   const [qi, setQi] = useState(0);
+  // Set when ask mode had nothing written and no account to write one.
+  const [unmatched, setUnmatched] = useState(false);
 
   // Ask mode opens with the question box. Subject mode goes straight to a card.
   useEffect(() => {
@@ -102,6 +104,28 @@ export default function Unlock() {
       return;
     }
 
+    // Nothing written for it. With an account linked, write one for this exact
+    // question, which is the only way the gate covers what someone is actually
+    // studying rather than the ten subjects we happened to write cards for.
+    if (isLinked(state.settings)) {
+      setPhase({ kind: 'loading', subject: '', concept: prompt.trim().slice(0, 48) });
+      makeCardForQuestion(state.settings, prompt)
+        .then((res) => {
+          if (res.kind === 'released') {
+            setPhase({ kind: 'released', reason: res.reason, prompt });
+            update({ stats: applyEvent(state.stats, { ts: Date.now(), site: 'app', verdict: 'LEGIT', gated: false, outcome: 'released', attempts: 0, ms: Date.now() - shownAt }) });
+            return;
+          }
+          setAnswers(res.card.questions.map(() => null));
+          setPhase({ kind: 'explain', card: res.card, subject: res.subject, attempts: 0, review: [] });
+        })
+        .catch((err) => setPhase({ kind: 'error', message: err instanceof Error ? err.message : String(err) }));
+      return;
+    }
+
+    // Unlinked: the bank is all there is, so ask about something they study and
+    // say plainly why it is not about what they asked.
+    setUnmatched(true);
     startSubjectCard();
   }
 
@@ -202,6 +226,14 @@ export default function Unlock() {
         <T v="label" color={c.fgMuted} style={{ marginTop: SPACE.sm }}>
           {phase.subject}
         </T>
+
+        {unmatched && !missed && (
+          <View style={{ marginTop: SPACE.lg, borderLeftWidth: 2, borderLeftColor: c.accentBorder, paddingLeft: SPACE.md }}>
+            <T v="bodySm" color={c.fgMuted}>
+              Nothing written for what you asked, so here is one from your subjects. Link an account and Mull writes cards for anything you are studying. One tap, free.
+            </T>
+          </View>
+        )}
 
         {missed && <AnswerKey items={phase.review} />}
 

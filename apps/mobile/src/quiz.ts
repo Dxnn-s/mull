@@ -1,4 +1,5 @@
 import { buildGateCard, grade, shuffleChoices } from '@mull/core/gate';
+import { classify, shouldGate } from '@mull/core/classify';
 import { createProvider } from '@mull/core';
 import { CARDS, demoCard } from '@mull/core/cards';
 import { isRemembered, listConcepts } from '@mull/core/stats';
@@ -109,4 +110,36 @@ export function formatSaved(seconds: number): string {
 export function formatClock(ms: number): string {
   const s = Math.max(0, Math.floor(ms / 1000));
   return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+}
+
+/** What ask mode gets back: either it let you through, or here is the card. */
+export type AskResult =
+  | { kind: 'released'; reason: string }
+  | { kind: 'card'; card: GateCard; subject: string; concept: string };
+
+/**
+ * The dynamic path. A linked account means the card is written for whatever was
+ * actually asked, not matched against a list, so it covers the topic somebody is
+ * studying this week rather than the ten subjects we happened to write.
+ *
+ * The classifier runs first and can let the question through on its own. That
+ * matters: a question with real thinking in it should never be gated just
+ * because no written card matched, and the preClassify rules only catch the
+ * obvious shapes.
+ */
+export async function makeCardForQuestion(settings: Settings, prompt: string): Promise<AskResult> {
+  const provider = createProvider(settings);
+  const verdict = await classify(prompt, settings, provider, 15_000);
+  if (!shouldGate(verdict, settings.strictness)) {
+    return { kind: 'released', reason: verdict.reason || 'that reads like real work' };
+  }
+  const concept = verdict.concept ?? prompt.trim().slice(0, 60);
+  const subject = verdict.subject ?? settings.subjects[0] ?? 'this';
+  const card = await buildGateCard(prompt, concept, subject, settings.questionsPerGate, provider, 30_000);
+  return { kind: 'card', card: shuffleChoices(card, Date.now()), subject, concept };
+}
+
+/** Whether the dynamic path is available at all. */
+export function isLinked(settings: Settings): boolean {
+  return settings.provider !== 'mock' && settings.apiKey.trim().length > 0;
 }
