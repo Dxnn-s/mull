@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DEMO_CONCEPTS } from '@mull/core/demo-cards';
 import { PROVIDER_INFO } from '@mull/core/provider-info';
 import { useStore } from '@/store';
+import { useTour, useTourAnchor } from '@/tour';
 import { EMPTY_STATS } from '@mull/core/stats';
 import { GUTTER, SPACE, useTheme } from '@/theme';
 import { Chip, Rule, SecondaryButton, T } from '@/ui';
@@ -16,6 +17,8 @@ export default function You() {
   const { c, palette, mode, setPalette, setMode } = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const tour = useTour();
+  const blockedAnchor = useTourAnchor('blocked-apps');
 
   return (
     <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingTop: insets.top + SPACE.lg, paddingHorizontal: GUTTER, paddingBottom: SPACE.s40 }}>
@@ -24,9 +27,10 @@ export default function You() {
       <View style={{ marginTop: SPACE.s32 }}>
         <NavRow label="AI provider" value={state.settings.provider === 'mock' ? 'Built in cards' : PROVIDER_INFO[state.settings.provider].label} onPress={() => router.push('/provider')} />
         <NavRow label="Subjects" value={state.settings.subjects.join(', ') || 'None picked'} onPress={() => router.push('/subjects')} />
-        <NavRow label="Blocked apps" value={state.blockedAppCount ? `${state.blockedAppCount} apps` : 'None picked'} onPress={() => router.push('/blocked-apps')} />
+        <View {...blockedAnchor}><NavRow label="Blocked apps" value={state.blockedAppCount ? `${state.blockedAppCount} apps` : 'None picked'} onPress={() => router.push('/blocked-apps')} /></View>
         <NavRow label="Plans" value="Free" onPress={() => router.push('/paywall')} />
-        <NavRow label="Tutorial" value="Replay" onPress={() => router.push('/welcome')} last />
+        <NavRow label="Tutorial" value="Replay" onPress={() => router.push('/welcome')} />
+        <NavRow label="Show me around" value="Guided run" onPress={() => { router.replace('/'); tour.start(); }} last />
       </View>
 
       <Rule label="what the gate asks" style={{ marginTop: SPACE.s32 }} />

@@ -12,6 +12,7 @@ import { matchConcept } from '@mull/core/cards';
 import { preClassify } from '@mull/core/pre-classify';
 import { shuffleChoices } from '@mull/core/gate';
 import { useStore } from '@/store';
+import { useTour } from '@/tour';
 import { GUTTER, RADIUS, SPACE, useTheme } from '@/theme';
 import { PrimaryButton, Rule, SecondaryButton, T, TextButton } from '@/ui';
 
@@ -40,6 +41,7 @@ export default function Unlock() {
   const [qi, setQi] = useState(0);
   // Set when ask mode had nothing written and no account to write one.
   const [unmatched, setUnmatched] = useState(false);
+  const tour = useTour();
 
   // Ask mode opens with the question box. Subject mode goes straight to a card.
   useEffect(() => {
@@ -141,6 +143,7 @@ export default function Unlock() {
       memory: rememberPass(state.memory, card.concept),
       session: { ...session, unlockUntil: Date.now() + state.unlockMinutes * 60_000 },
     });
+    tour.signal('pass');
     router.back();
   }
 
@@ -164,10 +167,12 @@ export default function Unlock() {
   function skip() {
     if (!phase || (phase.kind !== 'explain' && phase.kind !== 'quiz') || hard) return;
     update({ stats: record('skipped', phase.card.concept, phase.attempts) });
+    tour.signal('pass');
     router.back();
   }
   function cancel() {
     if (phase && (phase.kind === 'explain' || phase.kind === 'quiz')) update({ stats: record('cancelled', phase.card.concept, phase.attempts) });
+    tour.signal('pass');
     router.back();
   }
 
@@ -226,6 +231,14 @@ export default function Unlock() {
         <T v="label" color={c.fgMuted} style={{ marginTop: SPACE.sm }}>
           {phase.subject}
         </T>
+
+        {tour.active && (
+          <View style={{ marginTop: SPACE.lg, borderWidth: 1, borderColor: c.accentBorder, backgroundColor: c.accentSoft, borderRadius: RADIUS.card, padding: SPACE.md }}>
+            <T v="bodySm" color={c.accent}>
+              This is a real card. Read it, answer both, and the dial unlocks.
+            </T>
+          </View>
+        )}
 
         {unmatched && !missed && (
           <View style={{ marginTop: SPACE.lg, borderLeftWidth: 2, borderLeftColor: c.accentBorder, paddingLeft: SPACE.md }}>

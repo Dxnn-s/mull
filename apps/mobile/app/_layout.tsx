@@ -13,6 +13,7 @@ import { GeistMono_500Medium } from '@expo-google-fonts/geist-mono/500Medium';
 import { Platform, StyleSheet, View } from 'react-native';
 import { StoreProvider, useStore } from '@/store';
 import { ThemeProvider, useTheme, type Mode, type Palette } from '@/theme';
+import { Coachmark, TourProvider } from '@/tour';
 import { Grain } from '@/ui';
 import { registerServiceWorker } from '@/pwa';
 
@@ -74,6 +75,7 @@ function Routes() {
         <Stack.Screen name="subjects" />
         <Stack.Screen name="provider" />
       </Stack>
+      <Coachmark />
       {needsTutorial ? (
         <>
           <Redirect href="/welcome" />
@@ -93,7 +95,9 @@ export default function RootLayout() {
   return (
     <StoreProvider>
       <Themed>
-        <Routes />
+        <TourProvider>
+          <Routes />
+        </TourProvider>
       </Themed>
     </StoreProvider>
   );

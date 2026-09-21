@@ -6,6 +6,7 @@ import { hardModeUntil, isHardModeNow } from '@mull/core/schedule';
 import { holdRate, listConcepts } from '@mull/core/stats';
 import { Dial, type DialState } from '@/dial';
 import { useStore } from '@/store';
+import { tourPress, useTour, useTourAnchor } from '@/tour';
 import { GUTTER, SPACE, useTheme } from '@/theme';
 import { FigureRow, PrimaryButton, T, TextButton } from '@/ui';
 import { formatClock, formatSaved } from '@/quiz';
@@ -13,6 +14,10 @@ import { isIOSWeb, isInstalled } from '@/pwa';
 
 export default function Today() {
   const { state, update } = useStore();
+  const { signal } = useTour();
+  const startAnchor = useTourAnchor('start-session');
+  const gateAnchor = useTourAnchor('pass-card');
+  const dialAnchor = useTourAnchor('dial');
   const { c, palette, mode, setPalette } = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -87,7 +92,7 @@ export default function Today() {
         </View>
       )}
 
-      <View style={{ marginTop: SPACE.s32, marginBottom: SPACE.s32 }}>
+      <View {...dialAnchor} style={{ marginTop: SPACE.s32, marginBottom: SPACE.s32 }}>
         <Dial
           state={dial}
           progress={progress}
@@ -118,11 +123,17 @@ export default function Today() {
       <View style={{ marginTop: SPACE.xxl }}>
         {session ? (
           <>
-            {!unlocked && <PrimaryButton label={`Pass a card, unlock ${state.unlockMinutes} min`} onPress={() => router.push('/unlock')} />}
+            {!unlocked && (
+              <View {...gateAnchor}>
+                <PrimaryButton label={`Pass a card, unlock ${state.unlockMinutes} min`} onPress={tourPress('pass-card', signal, () => router.push('/unlock'))} />
+              </View>
+            )}
             <TextButton label="End session" onPress={end} align={unlocked ? 'center' : 'center'} style={{ marginTop: unlocked ? 0 : SPACE.xs }} />
           </>
         ) : (
-          <PrimaryButton label="Start a session" onPress={() => start(25)} />
+          <View {...startAnchor}>
+            <PrimaryButton label="Start a session" onPress={tourPress('start-session', signal, () => start(25))} />
+          </View>
         )}
       </View>
 
