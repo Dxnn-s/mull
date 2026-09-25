@@ -2,7 +2,8 @@ import { buildGateCard, grade, shuffleChoices } from '@mull/core/gate';
 import { classify, shouldGate } from '@mull/core/classify';
 import { createProvider } from '@mull/core';
 import { CARDS, demoCard } from '@mull/core/cards';
-import { isRemembered, listConcepts } from '@mull/core/stats';
+import { listConcepts } from '@mull/core/stats';
+import { isResting } from '@mull/core/ladder';
 import type { ConceptMemory, GateCard, ReviewItem, Settings } from '@mull/core/types';
 
 /**
@@ -58,7 +59,9 @@ export function pickConcept(subjects: string[], memory: ConceptMemory, memoryDay
   const passed = new Map(listConcepts(memory).map((c) => [c.concept, c.passedAt] as const));
   const best = perSubject.map(({ subject, names }) => {
     const all = names.map((concept) => ({ subject, concept }));
-    const fresh = all.filter((c) => !isRemembered(memory, c.concept, memoryDays));
+    // The ladder decides, so a concept you have held for weeks stays out of the
+    // way and one you keep dropping comes back sooner.
+    const fresh = all.filter((c) => !isResting(memory, c.concept));
     const pool = fresh.length ? fresh : all;
     pool.sort((a, b) => (passed.get(a.concept.toLowerCase()) ?? 0) - (passed.get(b.concept.toLowerCase()) ?? 0));
     return { pick: pool[0]!, fresh: fresh.length > 0, seen: passed.get(pool[0]!.concept.toLowerCase()) ?? 0 };

@@ -4,6 +4,7 @@ import * as Clipboard from 'expo-clipboard';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { listConcepts, medianCardMs } from '@mull/core/stats';
 import { buildRecap, weekStart } from '@mull/core/recap';
+import { strength } from '@mull/core/ladder';
 import { Rosette } from '@/rosette';
 import { useStore } from '@/store';
 import { GUTTER, SPACE, useTheme } from '@/theme';
@@ -17,6 +18,8 @@ export default function Record() {
   const [copied, setCopied] = useState(false);
   const { stats, memory } = state;
   const start = weekStart();
+  // What you are holding, not how long you sat still for.
+  const held = strength(memory);
   const week = stats.recent.filter((e) => e.ts >= start.getTime());
   const days = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(start);
@@ -41,18 +44,18 @@ export default function Record() {
       </View>
 
       <T v="numeralLg" style={{ marginTop: SPACE.xl }}>
-        {formatSaved(state.savedSeconds)}
+        {held.holding}
       </T>
       <T v="label" color={c.fgMuted} style={{ marginTop: SPACE.xs }}>
-        shielded all time
+        {held.holding === 1 ? 'concept held' : 'concepts held'}
       </T>
 
       <FigureRow
         style={{ marginTop: SPACE.xxl }}
         items={[
-          { value: week.filter((e) => e.gated).length, caption: 'gated' },
-          { value: week.filter((e) => e.outcome === 'passed').length, caption: 'held', accent: true },
-          { value: week.filter((e) => e.outcome === 'cancelled').length, caption: 'walked' },
+          { value: held.due, caption: 'due back' },
+          { value: held.solid, caption: 'solid', accent: true },
+          { value: formatSaved(state.savedSeconds), caption: 'in session' },
         ]}
       />
 

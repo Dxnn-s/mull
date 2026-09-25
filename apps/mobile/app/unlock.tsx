@@ -7,6 +7,7 @@ import * as Haptics from 'expo-haptics';
 import { isHardModeNow } from '@mull/core/schedule';
 import { applyEvent, promptHash, rememberPass } from '@mull/core/stats';
 import { readIntent } from '@mull/core/intent';
+import { rememberMiss } from '@mull/core/ladder';
 import type { IntentRead } from '@mull/core/intent';
 import type { GateCard, ReviewItem } from '@mull/core/types';
 import { gradeCard, isLinked, makeCard, makeCardForQuestion, pickConcept, formatClock } from '@/quiz';
@@ -174,7 +175,13 @@ export default function Unlock() {
       setPhase({ kind: 'blocked', until, review: g.review });
       return;
     }
-    update({ stats: record('failed', phase.card.concept, attempts) });
+    // Dropping it costs a rung, so it comes back sooner. Only on the first
+    // miss of a card: losing a rung per retry would bury someone who is
+    // genuinely working at it.
+    update({
+      stats: record('failed', phase.card.concept, attempts),
+      ...(attempts === 1 ? { memory: rememberMiss(state.memory, phase.card.concept) } : {}),
+    });
     setAnswers(g.reshuffled.questions.map(() => null));
     setQi(0);
     setPhase({ kind: 'explain', card: g.reshuffled, subject: phase.subject, attempts, review: g.review });

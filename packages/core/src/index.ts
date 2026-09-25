@@ -22,6 +22,7 @@ export { classifierSystemPrompt, classifierUserPrompt, gateSystemPrompt, gateUse
 export { extractJson } from './json.ts';
 export { preClassify } from './pre-classify.ts';
 export { readIntent } from './intent.ts';
+export { intervalDays, dueAt, isResting, rememberMiss, strength, TOP_RUNG } from './ladder.ts';
 export type { Intent, IntentRead, IntentSignals } from './intent.ts';
 export { isHardModeNow, hardModeUntil, EXAM_WEEK, SCHOOL_NIGHTS } from './schedule.ts';
 export type { HardSchedule } from './schedule.ts';
