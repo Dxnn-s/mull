@@ -98,6 +98,8 @@ export interface StatsEvent {
   ms?: number;
   /** Set when classification took longer than 8 s. */
   slow?: boolean;
+  /** djb2 of the prompt. Lets a repeat ask be recognised without storing it. */
+  promptHash?: string;
   /** Why a release happened when it was not the classifier's call, e.g. "user-legit", "timeout". */
   reason?: string;
 }

@@ -5,7 +5,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
 import * as Haptics from 'expo-haptics';
 import { isHardModeNow } from '@mull/core/schedule';
-import { applyEvent, rememberPass } from '@mull/core/stats';
+import { applyEvent, promptHash, rememberPass } from '@mull/core/stats';
+import { readIntent } from '@mull/core/intent';
+import type { IntentRead } from '@mull/core/intent';
 import type { GateCard, ReviewItem } from '@mull/core/types';
 import { gradeCard, isLinked, makeCard, makeCardForQuestion, pickConcept, formatClock } from '@/quiz';
 import { matchConcept } from '@mull/core/cards';
@@ -41,7 +43,10 @@ export default function Unlock() {
   const [qi, setQi] = useState(0);
   // Set when ask mode had nothing written and no account to write one.
   const [unmatched, setUnmatched] = useState(false);
+  const [asked, setAsked] = useState('');
   const tour = useTour();
+  // Why they are asking, read from what they have done before.
+  const [intent, setIntent] = useState<IntentRead | null>(null);
 
   // Ask mode opens with the question box. Subject mode goes straight to a card.
   useEffect(() => {
@@ -90,6 +95,7 @@ export default function Unlock() {
   function submitQuestion(text: string) {
     const prompt = text.trim();
     if (!prompt) return;
+    setAsked(prompt);
 
     const effort = preClassify(prompt);
     if (effort) {
@@ -100,7 +106,17 @@ export default function Unlock() {
 
     const match = matchConcept(prompt);
     if (match) {
-      const card = shuffleChoices(match, Date.now());
+      const read = readIntent({
+        concept: match.concept,
+        prompt,
+        memory: state.memory,
+        recent: state.stats.recent,
+        msToSubmit: Date.now() - shownAt,
+      });
+      setIntent(read);
+      // A concept they already passed gets a reminder, not the whole lesson.
+      const trimmed = read.questions < match.questions.length ? { ...match, questions: match.questions.slice(0, read.questions) } : match;
+      const card = shuffleChoices(trimmed, Date.now());
       setAnswers(card.questions.map(() => null));
       setPhase({ kind: 'explain', card, subject: match.subject, attempts: 0, review: [] });
       return;
@@ -132,7 +148,7 @@ export default function Unlock() {
   }
 
   function record(outcome: 'passed' | 'failed' | 'skipped' | 'cancelled' | 'blocked', concept?: string, attempts?: number) {
-    return applyEvent(state.stats, { ts: Date.now(), site: 'app', verdict: 'LAZY', gated: true, outcome, concept, attempts, ms: Date.now() - shownAt });
+    return applyEvent(state.stats, { ts: Date.now(), site: 'app', verdict: 'LAZY', gated: true, outcome, concept, attempts, ms: Date.now() - shownAt, ...(asked ? { promptHash: promptHash(asked) } : {}) });
   }
 
   function finishPass(card: GateCard, attempts: number) {
@@ -231,6 +247,18 @@ export default function Unlock() {
         <T v="label" color={c.fgMuted} style={{ marginTop: SPACE.sm }}>
           {phase.subject}
         </T>
+
+        {intent && intent.intent !== 'first' && !missed && (
+          <View style={{ marginTop: SPACE.lg, flexDirection: 'row', gap: SPACE.md, alignItems: 'baseline' }}>
+            <T v="label" color={intent.intent === 'grinding' ? c.danger : c.accent}>
+              {intent.intent === 'forgot' ? 'again' : intent.intent === 'reflex' ? 'slow down' : 'repeat'}
+            </T>
+            <T v="bodySm" color={c.fgMuted} style={{ flex: 1 }}>
+              {intent.why}
+              {intent.brief ? ' One question.' : ''}
+            </T>
+          </View>
+        )}
 
         {tour.active && (
           <View style={{ marginTop: SPACE.lg, borderWidth: 1, borderColor: c.accentBorder, backgroundColor: c.accentSoft, borderRadius: RADIUS.card, padding: SPACE.md }}>
