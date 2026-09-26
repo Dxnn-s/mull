@@ -18,7 +18,7 @@ export {
   listConcepts,
   promptHash,
 } from './stats.ts';
-export { classifierSystemPrompt, classifierUserPrompt, gateSystemPrompt, gateUserPrompt } from './prompts.ts';
+export { classifierSystemPrompt, classifierUserPrompt, gateSystemPrompt, gateUserPrompt, fenceUserText } from './prompts.ts';
 export { extractJson } from './json.ts';
 export { preClassify } from './pre-classify.ts';
 export { readIntent } from './intent.ts';

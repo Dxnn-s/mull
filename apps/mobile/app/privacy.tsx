@@ -2,7 +2,7 @@ import React from 'react';
 import { ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { isFreeModel } from '@mull/core';
+import { PROVIDER_INFO, isFreeModel } from '@mull/core';
 import { useStore } from '@/store';
 import { GUTTER, SPACE, useTheme } from '@/theme';
 import { Rule, T, TextButton } from '@/ui';
@@ -22,7 +22,11 @@ export default function Privacy() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const linked = state.settings.provider !== 'mock' && state.settings.apiKey.trim().length > 0;
-  const free = linked && isFreeModel(state.settings.model || '');
+  // An empty model means the provider default, and for OpenRouter that default
+  // is a free one. Checking the raw string meant this never fired for exactly
+  // the people it was written for.
+  const effectiveModel = state.settings.model || (linked ? PROVIDER_INFO[state.settings.provider].defaultModel : '');
+  const free = linked && isFreeModel(effectiveModel);
 
   return (
     <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingTop: insets.top + SPACE.md, paddingHorizontal: GUTTER, paddingBottom: SPACE.s40 }}>
@@ -37,7 +41,7 @@ export default function Privacy() {
 
       <Rule label="with nothing linked" style={{ marginTop: SPACE.s32 }} />
       <T v="body" style={{ marginTop: SPACE.lg }}>
-        Every card is already in the app. Mull makes no network requests at all. It works in aeroplane mode, and that is not a side effect, it is how it was built.
+        Every card is already in the app. Once it has loaded, Mull asks no provider anything, and it works in aeroplane mode. The site itself is hosted on Vercel, which keeps the usual web server logs of a page being loaded. Nothing else is sent.
       </T>
 
       <Rule label="with an account linked" style={{ marginTop: SPACE.s32 }} />
@@ -70,7 +74,7 @@ export default function Privacy() {
 
       <Rule label="not kept" style={{ marginTop: SPACE.s32 }} />
       <T v="body" style={{ marginTop: SPACE.lg }}>
-        What you type is never stored. When Mull says you asked something already today, it is comparing a short fingerprint of the words, not the words. The fingerprint cannot be turned back into your question.
+        What you type is never stored. What is stored is the name of the topic, like "osmosis", which comes from the model rather than from your words. When Mull says you asked something already today, it is comparing a short checksum of what you typed, not the text. A checksum is not meant to be reversed, though a short one like this is a speed bump rather than a lock.
       </T>
       <T v="bodySm" color={c.fgMuted} style={{ marginTop: SPACE.md }}>
         There is no analytics, no tracking, no crash reporting, and nothing is sold or shared. Nobody is counting how you use this.

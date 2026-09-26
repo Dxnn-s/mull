@@ -136,8 +136,16 @@ export async function makeCardForQuestion(settings: Settings, prompt: string): P
   if (!shouldGate(verdict, settings.strictness)) {
     return { kind: 'released', reason: verdict.reason || 'that reads like real work' };
   }
-  const concept = verdict.concept ?? prompt.trim().slice(0, 60);
+  // Never the user's own words. This used to fall back to the first sixty
+  // characters of what they typed, and that string went on to become a key in
+  // concept memory, an entry in the stats log, and a line in the recap people
+  // paste into group chats. The privacy page promises what you type is never
+  // stored; this was the path that broke it.
+  const concept = verdict.concept?.trim() || null;
   const subject = verdict.subject ?? settings.subjects[0] ?? 'this';
+  if (!concept) {
+    throw new Error('Could not work out what that is about. Try naming the topic, or pick a subject card.');
+  }
   const card = await buildGateCard(prompt, concept, subject, settings.questionsPerGate, provider, 30_000);
   return { kind: 'card', card: shuffleChoices(card, Date.now()), subject, concept };
 }

@@ -16,3 +16,6 @@ apps/mobile/.expo/
 apps/mobile/ios/
 apps/mobile/android/
 apps/mobile/screenshots/index.html
+
+# Built web export. Regenerate with npm run export:web; Vercel builds its own.
+apps/mobile/dist-web/
