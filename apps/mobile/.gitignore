@@ -39,3 +39,6 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Recorded demo footage. Regenerate with npm run demo:video.
+screenshots/video/

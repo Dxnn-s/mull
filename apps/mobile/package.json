@@ -43,7 +43,8 @@
     "icons": "node test/icons.mjs",
     "seal": "node test/rosette-sheet.mjs",
     "test:flow": "npm run export:web && node test/flow.mjs dist-web",
-    "export:web": "expo export --platform web --output-dir dist-web && node test/stamp-sw.mjs dist-web"
+    "export:web": "expo export --platform web --output-dir dist-web && node test/stamp-sw.mjs dist-web",
+    "demo:video": "npm run export:web && node test/demo-video.mjs dist-web"
   },
   "private": true
 }
