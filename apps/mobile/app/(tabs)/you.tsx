@@ -28,9 +28,9 @@ export default function You() {
         <NavRow label="AI provider" value={state.settings.provider === 'mock' ? 'Built in cards' : PROVIDER_INFO[state.settings.provider].label} onPress={() => router.push('/provider')} />
         <NavRow label="Subjects" value={state.settings.subjects.join(', ') || 'None picked'} onPress={() => router.push('/subjects')} />
         <View {...blockedAnchor}><NavRow label="Blocked apps" value={state.blockedAppCount ? `${state.blockedAppCount} apps` : 'None picked'} onPress={() => router.push('/blocked-apps')} /></View>
-        <NavRow label="Plans" value="Free" onPress={() => router.push('/paywall')} />
         <NavRow label="Tutorial" value="Replay" onPress={() => router.push('/welcome')} />
-        <NavRow label="Show me around" value="Guided run" onPress={() => { router.replace('/'); tour.start(); }} last />
+        <NavRow label="Show me around" value="Guided run" onPress={() => { router.replace('/'); tour.start(); }} />
+        <NavRow label="Privacy" value="What leaves this phone" onPress={() => router.push('/privacy')} last />
       </View>
 
       <Rule label="what the gate asks" style={{ marginTop: SPACE.s32 }} />
@@ -68,6 +68,8 @@ export default function You() {
         <Chip label="still" selected={!state.liveSeal} onPress={() => update({ liveSeal: false })} />
       </View>
 
+      {__DEV__ && (
+        <>
       <Rule label="test" style={{ marginTop: SPACE.s32 }} />
       <T v="bodySm" color={c.fgMuted} style={{ marginTop: SPACE.md }}>
         Mull ships with {DEMO_CONCEPTS.length} written cards, so the gate works with nothing linked. These buttons put the app into each state.
@@ -101,9 +103,12 @@ export default function You() {
         ))}
       </View>
 
+        </>
+      )}
+
       <View style={{ height: 1, backgroundColor: c.border, marginTop: SPACE.s40 }} />
       <T v="bodySm" color={c.fgMuted} style={{ marginTop: SPACE.lg }}>
-        Mull never reads what you type. Cards come from the subjects you picked. Nothing leaves this phone except the request for a card.
+        Nothing leaves this phone unless you link an AI account. What you type is never stored. Tap Privacy above for the whole of it.
       </T>
     </ScrollView>
   );

@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { hardModeUntil, isHardModeNow } from '@mull/core/schedule';
 import { holdRate, listConcepts } from '@mull/core/stats';
 import { Dial, type DialState } from '@/dial';
+import { strength } from '@mull/core/ladder';
 import { useStore } from '@/store';
 import { tourPress, useTour, useTourAnchor } from '@/tour';
 import { GUTTER, SPACE, useTheme } from '@/theme';
@@ -15,6 +16,7 @@ import { isIOSWeb, isInstalled } from '@/pwa';
 export default function Today() {
   const { state, update } = useStore();
   const { signal } = useTour();
+  const held = strength(state.memory);
   const startAnchor = useTourAnchor('start-session');
   const gateAnchor = useTourAnchor('pass-card');
   const dialAnchor = useTourAnchor('dial');
@@ -116,7 +118,7 @@ export default function Today() {
         items={[
           { value: decided === 0 ? '—' : `${Math.round(holdRate(state.stats) * 100)}%`, caption: 'held', accent: decided > 0 },
           { value: state.stats.streak, caption: 'streak' },
-          { value: state.blockedAppCount || '—', caption: 'apps' },
+          { value: held.holding || '—', caption: 'held' },
         ]}
       />
 

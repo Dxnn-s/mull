@@ -74,6 +74,7 @@ function Routes() {
         <Stack.Screen name="blocked-apps" />
         <Stack.Screen name="subjects" />
         <Stack.Screen name="provider" />
+        <Stack.Screen name="privacy" />
       </Stack>
       <Coachmark />
       {needsTutorial ? (
