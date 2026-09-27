@@ -2,6 +2,7 @@ import type { CompletionRequest, Provider } from '../types.ts';
 import { OPENAI_DEFAULT_MODEL } from '../provider-info.ts';
 import { readSse } from '../sse.ts';
 import { fetchWithTimeout } from './fetch-timeout.ts';
+import { providerError } from './errors.ts';
 
 export { OPENAI_DEFAULT_MODEL };
 
@@ -59,7 +60,7 @@ export class OpenAIProvider implements Provider {
       },
       req.timeoutMs,
     );
-    if (!res.ok) throw new Error(`OpenAI ${res.status}: ${(await res.text()).slice(0, 300)}`);
+    if (!res.ok) throw providerError('OpenAI', res.status, await res.text());
     return res;
   }
 }

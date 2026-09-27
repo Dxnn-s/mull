@@ -53,7 +53,10 @@ function Routes() {
   // this from looping: returning the redirect INSTEAD of the Stack left
   // /welcome with no navigator to render into, so it blanked, redirected
   // again, and remounted the tutorial back on step one every time.
-  const needsTutorial = ready && !state.onboardedAt && pathname !== '/welcome';
+  // /provider is exempt: someone coming back from an OAuth redirect has a code
+  // to exchange, and bouncing them to the tutorial loses it and tells them
+  // nothing about whether the sign in worked.
+  const needsTutorial = ready && !state.onboardedAt && pathname !== '/welcome' && pathname !== '/provider';
 
   // The static export ships <title>Mull</title>, but expo-router turns off
   // React Navigation's document title and writes nothing of its own, so the

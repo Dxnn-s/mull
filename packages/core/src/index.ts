@@ -39,6 +39,7 @@ export { THEME_CSS } from './theme.ts';
 export { PROVIDER_INFO, ANTHROPIC_DEFAULT_MODEL, OPENAI_DEFAULT_MODEL, GEMINI_DEFAULT_MODEL, OPENROUTER_DEFAULT_MODEL, FREE_MODELS, isFreeModel, COST_LINE, AGE_LINE } from './provider-info.ts';
 export { createVerifier, challengeFor, authorizeUrl, exchangeCode, codeFromCallback } from './oauth.ts';
 export { MockProvider } from './providers/mock.ts';
+export { providerError, scrubSecrets } from './providers/errors.ts';
 export { OpenRouterProvider } from './providers/openrouter.ts';
 export { AnthropicProvider } from './providers/anthropic.ts';
 export { OpenAIProvider } from './providers/openai.ts';

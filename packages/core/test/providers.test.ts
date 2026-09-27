@@ -87,9 +87,14 @@ describe('OpenAIProvider', () => {
       ],
     });
   });
-  it('surfaces HTTP errors with the status', async () => {
-    const { fetchImpl } = fakeFetch({ error: { message: 'bad key' } }, 401);
-    await expect(new OpenAIProvider('x', '', fetchImpl).complete({ system: 'S', user: 'U' })).rejects.toThrow(/OpenAI 401/);
+  it('turns an HTTP error into something the user can act on', async () => {
+    // This used to assert the raw status reached the message. It did, along
+    // with 300 characters of vendor JSON, onto a phone screen. The contract is
+    // now that the user is told what to do about it.
+    const { fetchImpl } = fakeFetch({ error: { message: 'bad key sk-proj-AAAAAAAAAAAA' } }, 401);
+    const call = new OpenAIProvider('x', '', fetchImpl).complete({ system: 'S', user: 'U' });
+    await expect(call).rejects.toThrow(/rejected that key/i);
+    await expect(call).rejects.not.toThrow(/sk-proj/);
   });
 });
 

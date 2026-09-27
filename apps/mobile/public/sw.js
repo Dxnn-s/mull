@@ -17,9 +17,21 @@
 const BUILD = '__MULL_BUILD__';
 const CACHE = `mull-${BUILD}`;
 const SHELL = ['/', '/manifest.json', '/apple-touch-icon.png', '/icon-192.png'];
+/** The offline fallback, kept separate so a visited route cannot overwrite it. */
+const SHELL_KEY = '/__shell';
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).catch(() => {}));
+  e.waitUntil(
+    caches
+      .open(CACHE)
+      .then(async (c) => {
+        await c.addAll(SHELL);
+        // Keep a copy of the real shell under its own key.
+        const root = await c.match('/');
+        if (root) await c.put(SHELL_KEY, root);
+      })
+      .catch(() => {}),
+  );
   self.skipWaiting();
 });
 
@@ -42,13 +54,20 @@ self.addEventListener('fetch', (e) => {
     e.respondWith(
       fetch(e.request)
         .then((res) => {
+          // Cache the route under its own URL. Putting every navigation under
+          // '/' meant visiting /privacy made the privacy page the offline
+          // fallback for the whole app.
           if (res.ok) {
             const copy = res.clone();
-            caches.open(CACHE).then((c) => c.put('/', copy)).catch(() => {});
+            const shell = res.clone();
+            caches.open(CACHE).then((c) => {
+              c.put(e.request, copy).catch(() => {});
+              if (url.pathname === '/') c.put(SHELL_KEY, shell).catch(() => {});
+            }).catch(() => {});
           }
           return res;
         })
-        .catch(() => caches.match('/').then((hit) => hit ?? Response.error())),
+        .catch(() => caches.match(e.request).then((hit) => hit ?? caches.match(SHELL_KEY)).then((hit) => hit ?? Response.error())),
     );
     return;
   }
@@ -66,7 +85,9 @@ self.addEventListener('fetch', (e) => {
             }
             return res;
           })
-          .catch(() => caches.match('/')),
+          // Handing back the shell HTML for a failed script or font request
+          // produces a parse error rather than a clean offline failure.
+          .catch(() => Response.error()),
     ),
   );
 });

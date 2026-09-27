@@ -67,12 +67,16 @@ export default function ProviderScreen() {
     setBusy(true);
     exchangeCode(code, verifier)
       .then((key) => {
-        window.localStorage.removeItem(VERIFIER_KEY);
         save('openrouter', key);
         setError(null);
       })
       .catch((e: Error) => setError(e.message))
-      .finally(() => setBusy(false));
+      .finally(() => {
+        // Whatever happened, the verifier is spent. Leaving it on a failure
+        // kept a secret at rest for nothing.
+        window.localStorage.removeItem(VERIFIER_KEY);
+        setBusy(false);
+      });
     // Runs once on mount; the code is consumed immediately.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

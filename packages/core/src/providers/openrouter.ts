@@ -2,6 +2,7 @@ import type { CompletionRequest, Provider } from '../types.ts';
 import { OPENROUTER_DEFAULT_MODEL } from '../provider-info.ts';
 import { readSse } from '../sse.ts';
 import { fetchWithTimeout } from './fetch-timeout.ts';
+import { providerError } from './errors.ts';
 
 export { OPENROUTER_DEFAULT_MODEL };
 
@@ -67,7 +68,7 @@ export class OpenRouterProvider implements Provider {
       },
       req.timeoutMs,
     );
-    if (!res.ok) throw new Error(`OpenRouter ${res.status}: ${(await res.text()).slice(0, 300)}`);
+    if (!res.ok) throw providerError('OpenRouter', res.status, await res.text());
     return res;
   }
 }
