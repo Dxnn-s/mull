@@ -3,6 +3,7 @@ import { Platform, Pressable, ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SUBJECT_CHIPS } from '@mull/core/consent';
+import { AGE_BANDS } from '@mull/core/age';
 import { Rosette } from '@/rosette';
 import { useStore } from '@/store';
 import { GUTTER, SPACE, useTheme } from '@/theme';
@@ -37,7 +38,7 @@ export default function Welcome() {
 
   const steps = [
     {
-      eyebrow: 'mull · 1 of 4',
+      eyebrow: 'mull · 1 of 5',
       title: 'You answer a question first.',
       lead: 'Every time you reach for ChatGPT:',
       items: ['Tap ChatGPT, and Mull opens instead.', 'Answer one question about what you are studying.', 'ChatGPT opens for fifteen minutes.'],
@@ -45,7 +46,7 @@ export default function Welcome() {
       cta: 'Go on',
     },
     {
-      eyebrow: 'mull · 2 of 4',
+      eyebrow: 'mull · 2 of 5',
       title: 'What it asks you.',
       lead: 'A few sentences on one topic, then two questions about it.',
       items: [
@@ -57,7 +58,7 @@ export default function Welcome() {
       cta: 'Makes sense',
     },
     {
-      eyebrow: 'mull · 3 of 4',
+      eyebrow: 'mull · 3 of 5',
       title: 'Pick your subjects.',
       lead: 'The questions come from these. Pick what you are studying right now.',
       items: [],
@@ -65,7 +66,15 @@ export default function Welcome() {
       cta: chosen.length ? 'Next' : 'Pick at least one',
     },
     {
-      eyebrow: 'mull · 4 of 4',
+      eyebrow: 'mull · 4 of 5',
+      title: 'How old are you?',
+      lead: 'Only so Mull knows which AI accounts you are allowed to link. It is never sent anywhere, and it does not change how the cards work.',
+      items: [],
+      numbered: false,
+      cta: state.ageBand ? 'Next' : 'Pick one',
+    },
+    {
+      eyebrow: 'mull · 5 of 5',
       title: 'Set up the block.',
       lead: Platform.OS === 'web' ? 'One Shortcuts automation, about a minute to set up:' : 'Choose the apps to block:',
       items:
@@ -78,7 +87,7 @@ export default function Welcome() {
   ];
 
   const s = steps[step]!;
-  const canAdvance = step !== 2 || chosen.length > 0;
+  const canAdvance = (step !== 2 || chosen.length > 0) && (step !== 3 || !!state.ageBand);
 
   return (
     <ScrollView style={{ flex: 1 }} contentContainerStyle={pad}>
@@ -97,6 +106,35 @@ export default function Welcome() {
       </T>
 
       {s.items.length > 0 && <List items={s.items} numbered={s.numbered} />}
+
+      {step === 3 && (
+        <View style={{ marginTop: SPACE.xl, gap: SPACE.sm }}>
+          {AGE_BANDS.map((b) => (
+            <Pressable
+              key={b.band}
+              accessibilityRole="button"
+              onPress={() => update({ ageBand: b.band })}
+              style={({ pressed }) => [
+                {
+                  borderWidth: 1,
+                  borderColor: state.ageBand === b.band ? c.accent : c.border,
+                  backgroundColor: state.ageBand === b.band ? c.accentSoft : 'transparent',
+                  borderRadius: 4,
+                  padding: SPACE.lg,
+                  opacity: pressed ? 0.7 : 1,
+                },
+              ]}
+            >
+              <T v="body" color={state.ageBand === b.band ? c.accent : c.fg}>
+                {b.label}
+              </T>
+              <T v="bodySm" color={c.fgMuted} style={{ marginTop: 2 }}>
+                {b.note}
+              </T>
+            </Pressable>
+          ))}
+        </View>
+      )}
 
       {step === 2 && (
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.sm, marginTop: SPACE.xl }}>

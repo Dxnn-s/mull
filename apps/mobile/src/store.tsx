@@ -1,3 +1,4 @@
+import type { AgeBand } from '@mull/core/age';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { BlockState, ConceptMemory, Settings, Stats } from '@mull/core/types';
@@ -35,6 +36,8 @@ export interface AppState {
    * teaches that. 'subject' asks about anything you study and needs no typing.
    */
   gateMode: 'ask' | 'subject';
+  /** Which providers may be linked. Asked once, never verified, never sent. */
+  ageBand: AgeBand | null;
   /** Live engraving: the seal counter-turns and the dial runs a sweep hand. */
   liveSeal: boolean;
   devDial: string | null;
@@ -52,6 +55,7 @@ const KEYS: Record<keyof AppState, string> = {
   unlockMinutes: 'mull.unlockMinutes',
   savedSeconds: 'mull.savedSeconds',
   gateMode: 'mull.gateMode',
+  ageBand: 'mull.ageBand',
   liveSeal: 'mull.liveSeal',
   devDial: 'mull.devDial',
   onboardedAt: 'mull.onboardedAt',
@@ -67,6 +71,7 @@ export const DEFAULT_APP_STATE: AppState = {
   unlockMinutes: 15,
   savedSeconds: 0,
   gateMode: 'ask',
+  ageBand: null,
   liveSeal: true,
   devDial: null,
   onboardedAt: null,
@@ -96,6 +101,7 @@ async function load(): Promise<AppState> {
     unlockMinutes: (raw[KEYS.unlockMinutes] as number) ?? 15,
     savedSeconds: (raw[KEYS.savedSeconds] as number) ?? 0,
     gateMode: (raw[KEYS.gateMode] as 'ask' | 'subject') ?? 'ask',
+    ageBand: (raw[KEYS.ageBand] as AgeBand | null) ?? null,
     liveSeal: (raw[KEYS.liveSeal] as boolean) ?? true,
     devDial: (raw[KEYS.devDial] as string | null) ?? null,
     onboardedAt: (raw[KEYS.onboardedAt] as number | null) ?? null,

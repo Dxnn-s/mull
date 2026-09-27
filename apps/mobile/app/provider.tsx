@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
 import { BANK_SUBJECTS, CARDS, PROVIDER_INFO, authorizeUrl, challengeFor, codeFromCallback, createVerifier, exchangeCode, isFreeModel } from '@mull/core';
 import type { ProviderId } from '@mull/core';
+import { AGE_BANDS, canUse, providersFor, whyHidden } from '@mull/core/age';
 import { mullUrl } from '@/config';
 import { useStore } from '@/store';
 import { GUTTER, RADIUS, SPACE, useTheme } from '@/theme';
@@ -38,6 +39,14 @@ export default function ProviderScreen() {
 
   const current = state.settings;
   const connected = current.provider !== 'mock' && current.apiKey.length > 0;
+  // Every provider states a minimum age in its own terms. Showing all of them
+  // with the age printed underneath is a disclaimer, not a gate, so anything
+  // this band may not use is not on the screen at all.
+  const band = state.ageBand;
+  const allowed = band ? providersFor(band) : [];
+  const pasteable = PASTE_PROVIDERS.filter((p) => allowed.includes(p));
+  const canOpenRouter = !!band && canUse(band, 'openrouter');
+  const hidden = band ? whyHidden(band) : null;
 
   function save(provider: ProviderId, apiKey: string) {
     update({ settings: { ...current, provider, apiKey, model: '' } });
@@ -100,7 +109,9 @@ export default function ProviderScreen() {
         Link your AI.
       </T>
       <T v="body" color={c.fgMuted} style={{ marginTop: SPACE.sm }}>
-        Mull already has written cards for every subject, so it works with nothing linked. Link an AI account only if you want cards on topics the bank has not covered yet.
+        {allowed.length === 0 && band
+          ? 'Mull has written cards for every subject, so it works fully without linking anything. That is the whole app, not a limited version of it.'
+          : 'Mull already has written cards for every subject, so it works with nothing linked. Link an AI account only if you want cards on topics the bank has not covered yet.'}
       </T>
 
       <View style={{ marginTop: SPACE.xl, borderWidth: 1, borderColor: connected ? c.accentBorder : c.border, backgroundColor: connected ? c.accentSoft : 'transparent', borderRadius: RADIUS.card, padding: SPACE.lg }}>
@@ -118,6 +129,28 @@ export default function ProviderScreen() {
         </T>
       )}
 
+      {!band && (
+        <>
+          <Rule label="first, how old are you" style={{ marginTop: SPACE.s32 }} />
+          <T v="bodySm" color={c.fgMuted} style={{ marginTop: SPACE.md }}>
+            Each provider sets its own minimum age. Mull needs to know which ones you can use. This is never sent anywhere.
+          </T>
+          <View style={{ flexDirection: 'row', gap: SPACE.sm, marginTop: SPACE.lg, flexWrap: 'wrap' }}>
+            {AGE_BANDS.map((b) => (
+              <Chip key={b.band} label={b.label} selected={false} onPress={() => update({ ageBand: b.band })} />
+            ))}
+          </View>
+        </>
+      )}
+
+      {hidden && (
+        <T v="bodySm" color={c.fgMuted} style={{ marginTop: SPACE.xl, borderLeftWidth: 2, borderLeftColor: c.accentBorder, paddingLeft: SPACE.md }}>
+          {hidden}
+        </T>
+      )}
+
+      {canOpenRouter && (
+      <>
       <Rule label="optional, one tap" style={{ marginTop: SPACE.s32 }} />
       <T v="bodySm" color={c.fgMuted} style={{ marginTop: SPACE.md }}>
         OpenRouter is the only one you can sign into. It defaults to a free open model, so signing in costs nothing: no card, no credit, capped at 50 cards a day, which is far more than anyone opens.
@@ -131,6 +164,8 @@ export default function ProviderScreen() {
         </View>
       ) : (
         <PrimaryButton label="Sign in with OpenRouter" onPress={connectOpenRouter} style={{ marginTop: SPACE.lg }} />
+      )}
+      </>
       )}
 
       {current.provider === 'openrouter' && (
@@ -154,9 +189,14 @@ export default function ProviderScreen() {
         </>
       )}
 
-      <Rule label="or paste a key" style={{ marginTop: SPACE.s32 }} />
+      {pasteable.length > 0 && (
+      <>
+      <Rule label={canOpenRouter ? 'or paste a key' : 'paste a key'} style={{ marginTop: SPACE.s32 }} />
+      <T v="bodySm" color={c.fgMuted} style={{ marginTop: SPACE.md }}>
+        A platform key spends the whole account it belongs to. If it is a parent's, ask them first.
+      </T>
       <View style={{ flexDirection: 'row', gap: SPACE.sm, marginTop: SPACE.lg, flexWrap: 'wrap' }}>
-        {PASTE_PROVIDERS.map((p) => (
+        {pasteable.map((p) => (
           <Chip key={p} label={PROVIDER_INFO[p].label} selected={picked === p} onPress={() => setPicked(p)} />
         ))}
       </View>
@@ -203,12 +243,14 @@ export default function ProviderScreen() {
           />
         </View>
       </View>
+      </>
+      )}
 
       {connected && (
         <>
           <Rule label="disconnect" style={{ marginTop: SPACE.s32 }} />
           <SecondaryButton
-            label="Go back to demo cards"
+            label="Unlink, go back to built in cards"
             onPress={() => {
               save('mock', '');
               setTyped('');
@@ -218,9 +260,11 @@ export default function ProviderScreen() {
         </>
       )}
 
-      <T v="bodySm" color={c.fgMuted} style={{ marginTop: SPACE.s32 }}>
-        The key stays on this phone. It is sent to your provider and nowhere else, and Mull has no server to send it to.
-      </T>
+      {allowed.length > 0 && (
+        <T v="bodySm" color={c.fgMuted} style={{ marginTop: SPACE.s32 }}>
+          The key stays on this phone. It is sent to your provider and nowhere else, and Mull has no server to send it to.
+        </T>
+      )}
     </ScrollView>
   );
 }

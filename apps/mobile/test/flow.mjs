@@ -80,8 +80,16 @@ await page.getByText('Physics', { exact: true }).click();
 await page.waitForTimeout(400);
 await page.getByText('Next', { exact: true }).click();
 await page.waitForTimeout(700);
-if (!(await page.getByText('Set up the block.').count())) fail('picking a subject did not unlock step four');
-console.log('subject gate ok');
+
+// Step four asks for an age band, and refuses to move until it has one.
+if (!(await page.getByText('How old are you?').count())) fail('picking a subject did not reach the age step');
+if (!(await page.getByText('Pick one').count())) fail('the age step would advance with no band chosen');
+await page.getByText('13 to 17', { exact: true }).click();
+await page.waitForTimeout(400);
+await page.getByText('Next', { exact: true }).click();
+await page.waitForTimeout(700);
+if (!(await page.getByText('Set up the block.').count())) fail('choosing an age did not unlock the last step');
+console.log('subject gate ok, age gate ok');
 
 await page.getByText('Start', { exact: true }).click();
 await page.waitForTimeout(1500);

@@ -28,6 +28,8 @@ export { isHardModeNow, hardModeUntil, EXAM_WEEK, SCHOOL_NIGHTS } from './schedu
 export type { HardSchedule } from './schedule.ts';
 export { buildRecap, weekStart } from './recap.ts';
 export { needsConsent, CONSENT_TEXT, SUBJECT_CHIPS } from './consent.ts';
+export { AGE_BANDS, canUse, providersFor, whyHidden, minAgeFor } from './age.ts';
+export type { AgeBand } from './age.ts';
 export { chatReply, chatStream, CHAT_SYSTEM } from './chat.ts';
 export { readSse } from './sse.ts';
 export { demoCard, DEMO_CONCEPTS, CARDS, BANK_SUBJECTS, pickCard, matchConcept } from './cards.ts';
