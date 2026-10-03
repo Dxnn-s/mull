@@ -21,6 +21,21 @@ describe('card bank', () => {
     }
   });
 
+  it('every card carries spare questions, so a repeat is a different quiz', () => {
+    // Two questions asked, four carried. Without spares the rotation has
+    // nothing to rotate and a returning concept is the same quiz again.
+    for (const card of CARDS) {
+      expect(card.questions.length, card.concept).toBeGreaterThanOrEqual(4);
+    }
+  });
+
+  it('no card asks the same thing twice under a different wording', () => {
+    for (const card of CARDS) {
+      const qs = card.questions.map((q) => q.q.toLowerCase().trim());
+      expect(new Set(qs).size, card.concept).toBe(qs.length);
+    }
+  });
+
   it('every answer index points at a real choice, and every question has a why', () => {
     for (const card of CARDS) {
       for (const q of card.questions) {

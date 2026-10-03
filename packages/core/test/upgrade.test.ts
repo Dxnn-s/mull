@@ -93,8 +93,21 @@ describe('preClassify', () => {
   it('releases effort-shown prompts without a model call', async () => {
     expect(preClassify('what is x')).toBeNull();
     expect(preClassify('fix this:\n```js\nconst a = 1\n```')).toMatch(/code block/);
-    expect(preClassify('a'.repeat(601))).toMatch(/long prompt/);
-    expect(preClassify('line1\nline2\nline3\nline4\nline5')).toMatch(/multi-line/);
+    // These two used to count as effort and were the way around the gate:
+    // one character repeated past 600, and five lines of five characters.
+    expect(preClassify('a'.repeat(601))).toBeNull();
+    expect(preClassify('line1\nline2\nline3\nline4\nline5')).toBeNull();
+    // Lines that actually carry something still release.
+    expect(
+      preClassify(
+        [
+          'I tried integrating by parts and got stuck.',
+          'I set u as x and dv as e to the x dx.',
+          'That gave me x times e to the x minus the integral.',
+          'The second integral looks the same as the first.',
+        ].join('\n'),
+      ),
+    ).toMatch(/multi-line/);
     expect(preClassify('line1\nline2\nline3')).toBeNull();
 
     const provider = new MockProvider();

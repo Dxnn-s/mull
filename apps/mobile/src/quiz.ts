@@ -4,6 +4,7 @@ import { createProvider } from '@mull/core';
 import { CARDS, demoCard } from '@mull/core/cards';
 import { listConcepts } from '@mull/core/stats';
 import { isResting } from '@mull/core/ladder';
+import { rotateQuestions } from '@mull/core/rotate';
 import type { ConceptMemory, GateCard, ReviewItem, Settings } from '@mull/core/types';
 
 /**
@@ -75,12 +76,18 @@ export function pickConcept(subjects: string[], memory: ConceptMemory, memoryDay
   return slice[Math.abs(seed) % slice.length]?.pick ?? null;
 }
 
-export async function makeCard(settings: Settings, subject: string, concept: string): Promise<GateCard> {
+export async function makeCard(settings: Settings, subject: string, concept: string, memory?: ConceptMemory): Promise<GateCard> {
   // The bank answers first. These are written to the same rules the model gets,
   // so a written card is not a downgrade, and it costs nothing and arrives with
   // no network at all.
   const written = demoCard(concept);
-  if (written) return shuffleChoices(written, Date.now());
+  if (written) {
+    // A card carrying spare questions asks a different pair each time the
+    // concept comes back, so a repeat is a new quiz rather than a memory test
+    // of which option was second.
+    const passes = memory?.[concept.trim().toLowerCase()]?.passes ?? 0;
+    return shuffleChoices(rotateQuestions(written, passes, settings.questionsPerGate), Date.now());
+  }
 
   // The mock provider answers with a placeholder whose choices read "The
   // correct one" and "A silly one". That is fine in a test and humiliating in

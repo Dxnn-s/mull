@@ -8,6 +8,7 @@ import { isHardModeNow } from '@mull/core/schedule';
 import { applyEvent, promptHash, rememberPass } from '@mull/core/stats';
 import { readIntent } from '@mull/core/intent';
 import { rememberMiss } from '@mull/core/ladder';
+import { rotateQuestions } from '@mull/core/rotate';
 import type { IntentRead } from '@mull/core/intent';
 import type { GateCard, ReviewItem } from '@mull/core/types';
 import { gradeCard, isLinked, makeCard, makeCardForQuestion, pickConcept, formatClock } from '@/quiz';
@@ -73,7 +74,7 @@ export default function Unlock() {
       return;
     }
     setPhase({ kind: 'loading', ...pick });
-    makeCard(state.settings, pick.subject, pick.concept)
+    makeCard(state.settings, pick.subject, pick.concept, state.memory)
       .then((card) => {
         setAnswers(card.questions.map(() => null));
         setPhase({ kind: 'explain', card, subject: pick.subject, attempts: 0, review: [] });
@@ -116,7 +117,11 @@ export default function Unlock() {
       });
       setIntent(read);
       // A concept they already passed gets a reminder, not the whole lesson.
-      const trimmed = read.questions < match.questions.length ? { ...match, questions: match.questions.slice(0, read.questions) } : match;
+      // Rotate first so a repeat is a different pair, then trim if the intent
+      // read says this is a reminder rather than a lesson.
+      const passes = state.memory[match.concept.trim().toLowerCase()]?.passes ?? 0;
+      const rotated = rotateQuestions(match, passes, state.settings.questionsPerGate);
+      const trimmed = read.questions < rotated.questions.length ? { ...rotated, questions: rotated.questions.slice(0, read.questions) } : rotated;
       const card = shuffleChoices(trimmed, Date.now());
       setAnswers(card.questions.map(() => null));
       setPhase({ kind: 'explain', card, subject: match.subject, attempts: 0, review: [] });
